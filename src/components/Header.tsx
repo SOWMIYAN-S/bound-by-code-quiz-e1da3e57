@@ -34,7 +34,10 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-xl md:text-2xl font-bold text-violet-700">
+          <h1 
+            className="text-xl md:text-2xl font-bold text-violet-700 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
             Code Quest <span className="text-violet-900">Season 2</span>
           </h1>
         </div>

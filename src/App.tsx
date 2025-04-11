@@ -12,6 +12,8 @@ import Results from "./pages/Results";
 import Leaderboard from "./pages/Leaderboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -22,15 +24,21 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/register" element={<Registration />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/results" element={<Results />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/register" element={<Registration />} />
+                <Route path="/quiz" element={<Quiz />} />
+                <Route path="/results" element={<Results />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
         </BrowserRouter>
       </UserProvider>
     </TooltipProvider>

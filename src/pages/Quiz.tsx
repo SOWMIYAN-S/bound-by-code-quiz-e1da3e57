@@ -24,6 +24,7 @@ const Quiz = () => {
   useEffect(() => {
     if (!user) {
       navigate('/');
+      return;
     }
   }, [user, navigate]);
 
@@ -83,11 +84,11 @@ const Quiz = () => {
     setIsQuizComplete(true);
     
     if (user) {
-      updateUserScore(user.id, score, true);
+      updateUserScore(user.id, score + (selectedOption === quizQuestions[currentQuestion].correctAnswer ? 1 : 0), true);
       
       toast({
         title: "Quiz completed!",
-        description: `Your score: ${score} out of ${quizQuestions.length}`,
+        description: `Your score: ${score + (selectedOption === quizQuestions[currentQuestion].correctAnswer ? 1 : 0)} out of ${quizQuestions.length}`,
         duration: 5000,
       });
     }

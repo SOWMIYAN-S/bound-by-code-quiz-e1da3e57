@@ -27,30 +27,45 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   // Load data from localStorage on initial render
   useEffect(() => {
-    const storedUser = localStorage.getItem('quizUser');
-    const storedUsers = localStorage.getItem('quizAllUsers');
-    
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    
-    if (storedUsers) {
-      setAllUsers(JSON.parse(storedUsers));
+    try {
+      const storedUser = localStorage.getItem('quizUser');
+      const storedUsers = localStorage.getItem('quizAllUsers');
+      
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+      
+      if (storedUsers) {
+        setAllUsers(JSON.parse(storedUsers));
+      }
+    } catch (error) {
+      console.error('Error loading user data from localStorage:', error);
+      // Clear potentially corrupted data
+      localStorage.removeItem('quizUser');
+      localStorage.removeItem('quizAllUsers');
     }
   }, []);
 
   // Save data to localStorage whenever it changes
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('quizUser', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('quizUser');
+    try {
+      if (user) {
+        localStorage.setItem('quizUser', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('quizUser');
+      }
+    } catch (error) {
+      console.error('Error saving user to localStorage:', error);
     }
   }, [user]);
 
   useEffect(() => {
-    if (allUsers.length) {
-      localStorage.setItem('quizAllUsers', JSON.stringify(allUsers));
+    try {
+      if (allUsers.length) {
+        localStorage.setItem('quizAllUsers', JSON.stringify(allUsers));
+      }
+    } catch (error) {
+      console.error('Error saving all users to localStorage:', error);
     }
   }, [allUsers]);
 
@@ -58,7 +73,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setAllUsers(prev => {
       const exists = prev.find(u => u.email === newUser.email);
       if (exists) {
-        return prev;
+        // Update existing user
+        return prev.map(u => u.email === newUser.email ? { ...newUser, score: u.score, completed: u.completed } : u);
       }
       return [...prev, newUser];
     });
@@ -80,6 +96,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('quizUser');
   };
 
   return (
