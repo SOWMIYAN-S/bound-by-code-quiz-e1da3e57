@@ -1,67 +1,82 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '@/context/UserContext';
-import { Button } from '@/components/ui/button';
-import { Instagram } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { useUser } from "@/context/UserContext";
+import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "@/context/ThemeContext";
 
 const Header = () => {
-  const { user, logout } = useUser();
-  const navigate = useNavigate();
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
+  const { user, logoutUser } = useUser();
+  const { theme } = useTheme();
+  
   return (
-    <header 
-      className={`sticky top-0 z-50 w-full transition-all duration-200 ${
-        isScrolled 
-          ? 'bg-white/90 backdrop-blur-md shadow-sm' 
-          : 'bg-transparent'
-      }`}
-    >
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <h1 
-            className="text-xl md:text-2xl font-bold text-violet-700 cursor-pointer"
-            onClick={() => navigate('/')}
-          >
-            Code Quest <span className="text-violet-900">Season 2</span>
-          </h1>
-        </div>
+    <header className={`border-b p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}>
+      <div className="container mx-auto flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold">
+          <span className={`text-violet-600 ${theme === 'dark' ? 'text-violet-400' : ''}`}>Python</span> Quiz
+        </Link>
         
         <div className="flex items-center gap-4">
-          <a 
-            href="https://www.instagram.com/bound_by_code" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-violet-700 hover:text-violet-900 transition-colors"
-            aria-label="Instagram"
-          >
-            <Instagram size={24} />
-          </a>
+          <ThemeToggle />
           
-          {user && (
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="hidden sm:flex"
-            >
-              Logout
-            </Button>
-          )}
+          <nav>
+            <ul className="flex gap-6">
+              {user ? (
+                <>
+                  <li>
+                    <Link 
+                      to="/quiz"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Quiz
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/results"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Results
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/leaderboard"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Leaderboard
+                    </Link>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={logoutUser}
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link 
+                      to="/register"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Register
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/leaderboard"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Leaderboard
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </nav>
         </div>
       </div>
     </header>
