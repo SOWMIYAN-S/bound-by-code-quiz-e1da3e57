@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,8 +14,7 @@ const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
   
-  // Static admin password (in a real app, this would be authenticated properly)
-  const ADMIN_PASSWORD = 'admin123';
+  const ADMIN_PASSWORD = '123123123';
 
   const handleLogin = () => {
     if (adminPassword === ADMIN_PASSWORD) {
@@ -233,7 +231,6 @@ interface UserTableProps {
 }
 
 const UserTable = ({ users, sortBy }: UserTableProps) => {
-  // Sort users
   const sortedUsers = [...users].sort((a, b) => {
     if (sortBy === 'score') {
       return (b.score || 0) - (a.score || 0);

@@ -5,7 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 import { useTheme } from "@/context/ThemeContext";
 
 const Header = () => {
-  const { user, logoutUser } = useUser();
+  const { user, logout } = useUser();
   const { theme } = useTheme();
   
   return (
@@ -48,7 +48,7 @@ const Header = () => {
                   </li>
                   <li>
                     <button 
-                      onClick={logoutUser}
+                      onClick={logout}
                       className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
                     >
                       Logout

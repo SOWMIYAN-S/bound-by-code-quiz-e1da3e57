@@ -12,7 +12,7 @@ import QuizFilters from '@/components/QuizFilters';
 import { useTheme } from '@/context/ThemeContext';
 
 const Quiz = () => {
-  const { user, updateUserScore } = useUser();
+  const { user, updateUserScore, allUsers } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme } = useTheme();
@@ -26,6 +26,21 @@ const Quiz = () => {
   const [difficulty, setDifficulty] = useState('all');
   const [category, setCategory] = useState('all');
   const [filteredQuestions, setFilteredQuestions] = useState(quizQuestions);
+
+  // Check if user has already completed the quiz
+  useEffect(() => {
+    if (user) {
+      const existingUser = allUsers.find(u => u.email === user.email);
+      if (existingUser && existingUser.completed) {
+        toast({
+          title: "Quiz already completed",
+          description: "You have already completed this quiz. Redirecting to results page.",
+          duration: 3000,
+        });
+        navigate('/results');
+      }
+    }
+  }, [user, allUsers, navigate, toast]);
 
   // Filter questions based on selected criteria
   useEffect(() => {
