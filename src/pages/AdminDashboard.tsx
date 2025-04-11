@@ -4,15 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { quizQuestions } from '@/data/questions';
-import { Download, Users, Search, User, BarChart4 } from 'lucide-react';
+import { Download, Users, Search, User, BarChart4, Trash2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const AdminDashboard = () => {
-  const { allUsers } = useUser();
+  const { allUsers, deleteUserResponse } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
+  const { toast } = useToast();
   
   const ADMIN_PASSWORD = '123123123';
 
@@ -63,6 +66,15 @@ const AdminDashboard = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDeleteResponse = (userId: string, userName: string) => {
+    deleteUserResponse(userId);
+    toast({
+      title: "Response Deleted",
+      description: `${userName}'s quiz response has been reset. They can now retake the quiz.`,
+      duration: 3000,
+    });
   };
 
   const filteredUsers = allUsers.filter(user => 
@@ -189,6 +201,7 @@ const AdminDashboard = () => {
                   <UserTable 
                     users={filteredUsers} 
                     sortBy="score"
+                    onDeleteResponse={handleDeleteResponse}
                   />
                 </div>
               </TabsContent>
@@ -198,6 +211,7 @@ const AdminDashboard = () => {
                   <UserTable 
                     users={filteredUsers.filter(user => user.completed)} 
                     sortBy="score"
+                    onDeleteResponse={handleDeleteResponse}
                   />
                 </div>
               </TabsContent>
@@ -207,6 +221,7 @@ const AdminDashboard = () => {
                   <UserTable 
                     users={filteredUsers.filter(user => !user.completed)} 
                     sortBy="name"
+                    onDeleteResponse={handleDeleteResponse}
                   />
                 </div>
               </TabsContent>
@@ -228,9 +243,10 @@ interface UserTableProps {
     completed?: boolean;
   }>;
   sortBy: 'name' | 'score';
+  onDeleteResponse: (userId: string, userName: string) => void;
 }
 
-const UserTable = ({ users, sortBy }: UserTableProps) => {
+const UserTable = ({ users, sortBy, onDeleteResponse }: UserTableProps) => {
   const sortedUsers = [...users].sort((a, b) => {
     if (sortBy === 'score') {
       return (b.score || 0) - (a.score || 0);
@@ -244,34 +260,35 @@ const UserTable = ({ users, sortBy }: UserTableProps) => {
   }
 
   return (
-    <table className="w-full">
-      <thead>
-        <tr className="border-b border-violet-200">
-          <th className="p-3 text-left">Name</th>
-          <th className="p-3 text-left">Email</th>
-          <th className="p-3 text-left">Phone</th>
-          <th className="p-3 text-right">Score</th>
-          <th className="p-3 text-right">Status</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Phone</TableHead>
+          <TableHead className="text-right">Score</TableHead>
+          <TableHead className="text-right">Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {sortedUsers.map(user => {
-          const percentage = user.score 
-            ? Math.round(user.score * 100 / quizQuestions.length) 
+          const percentage = user.score !== undefined
+            ? Math.round((user.score * 100) / quizQuestions.length)
             : 0;
             
           return (
-            <tr key={user.id} className="border-b border-violet-100 hover:bg-violet-50 transition-colors">
-              <td className="p-3">{user.name}</td>
-              <td className="p-3">{user.email}</td>
-              <td className="p-3">{user.phone}</td>
-              <td className="p-3 text-right">
+            <TableRow key={user.id}>
+              <TableCell>{user.name}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.phone}</TableCell>
+              <TableCell className="text-right">
                 {user.completed 
                   ? `${user.score}/${quizQuestions.length} (${percentage}%)`
                   : '-'
                 }
-              </td>
-              <td className="p-3 text-right">
+              </TableCell>
+              <TableCell className="text-right">
                 <span className={`px-2 py-1 rounded-full text-xs ${
                   user.completed 
                     ? 'bg-green-100 text-green-800' 
@@ -279,12 +296,24 @@ const UserTable = ({ users, sortBy }: UserTableProps) => {
                 }`}>
                   {user.completed ? 'Completed' : 'Pending'}
                 </span>
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell className="text-right">
+                {user.completed && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => onDeleteResponse(user.id, user.name)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 };
 

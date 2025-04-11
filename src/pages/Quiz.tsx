@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/context/UserContext';
@@ -140,9 +139,11 @@ const Quiz = () => {
       const finalScore = score + (selectedOption === filteredQuestions[currentQuestion].correctAnswer ? 1 : 0);
       updateUserScore(user.id, finalScore, true);
       
+      const percentage = Math.round((finalScore * 100) / filteredQuestions.length);
+      
       toast({
         title: "Quiz completed!",
-        description: `Your score: ${finalScore} out of ${filteredQuestions.length}`,
+        description: `Your score: ${finalScore} out of ${filteredQuestions.length} (${percentage}%)`,
         duration: 5000,
       });
     }
@@ -230,10 +231,29 @@ const Quiz = () => {
           theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'border-violet-100'
         }`}>
           <CardHeader>
-            <CardTitle className={`text-xl whitespace-pre-line no-select no-copy ${
+            <CardTitle className={`text-xl ${
               theme === 'dark' ? 'text-white' : 'text-violet-900'
             }`}>
-              {filteredQuestions[currentQuestion].text}
+              {filteredQuestions[currentQuestion].text.includes('```python') ? (
+                <div>
+                  {filteredQuestions[currentQuestion].text.split('```python').map((part, index) => (
+                    index === 0 ? 
+                    <div key={index} className="mb-4 whitespace-pre-line">{part}</div> : 
+                    <div key={index}>
+                      <div className={`p-4 rounded-md font-mono text-sm whitespace-pre overflow-x-auto ${
+                        theme === 'dark' ? 'bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {part.split('```')[0]}
+                      </div>
+                      {part.split('```')[1] && (
+                        <div className="mt-4 whitespace-pre-line">{part.split('```')[1]}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="whitespace-pre-line">{filteredQuestions[currentQuestion].text}</div>
+              )}
             </CardTitle>
           </CardHeader>
           
@@ -241,7 +261,7 @@ const Quiz = () => {
             {filteredQuestions[currentQuestion].options.map((option, index) => (
               <div
                 key={index}
-                className={`p-4 rounded-lg cursor-pointer transition-colors no-select no-copy ${
+                className={`p-4 rounded-lg cursor-pointer transition-colors ${
                   selectedOption === index
                     ? theme === 'dark' 
                       ? 'bg-violet-800 text-white' 
@@ -258,7 +278,28 @@ const Quiz = () => {
                   }`}>
                     {String.fromCharCode(65 + index)}
                   </span>
-                  <span className="whitespace-pre-line">{option}</span>
+                  {option.includes('```python') ? (
+                    <div className="w-full">
+                      {option.split('```python').map((part, idx) => (
+                        idx === 0 ? 
+                        <div key={idx} className="mb-2 whitespace-pre-line">{part}</div> : 
+                        <div key={idx}>
+                          <div className={`p-3 rounded-md font-mono text-sm whitespace-pre overflow-x-auto ${
+                            theme === 'dark' || selectedOption === index 
+                              ? 'bg-gray-900 text-gray-200' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {part.split('```')[0]}
+                          </div>
+                          {part.split('```')[1] && (
+                            <div className="mt-2 whitespace-pre-line">{part.split('```')[1]}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="whitespace-pre-line">{option}</span>
+                  )}
                 </span>
               </div>
             ))}

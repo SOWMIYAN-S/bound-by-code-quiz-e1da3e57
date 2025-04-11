@@ -22,7 +22,9 @@ const Results = () => {
     return null;
   }
 
-  const percentage = Math.round((user.score || 0) * 100 / quizQuestions.length);
+  const percentage = user.score !== undefined 
+    ? Math.round((user.score * 100) / quizQuestions.length) 
+    : 0;
   
   return (
     <div className="container mx-auto px-4 py-8">

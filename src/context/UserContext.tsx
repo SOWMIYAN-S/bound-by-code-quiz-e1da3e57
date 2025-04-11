@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface User {
@@ -17,6 +16,7 @@ interface UserContextType {
   allUsers: User[];
   addUser: (user: User) => void;
   updateUserScore: (userId: string, score: number, completed?: boolean) => void;
+  deleteUserResponse: (userId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -25,7 +25,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
 
-  // Load data from localStorage on initial render
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('quizUser');
@@ -40,13 +39,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Error loading user data from localStorage:', error);
-      // Clear potentially corrupted data
       localStorage.removeItem('quizUser');
       localStorage.removeItem('quizAllUsers');
     }
   }, []);
 
-  // Save data to localStorage whenever it changes
   useEffect(() => {
     try {
       if (user) {
@@ -73,7 +70,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setAllUsers(prev => {
       const exists = prev.find(u => u.email === newUser.email);
       if (exists) {
-        // Update existing user
         return prev.map(u => u.email === newUser.email ? { ...newUser, score: u.score, completed: u.completed } : u);
       }
       return [...prev, newUser];
@@ -94,6 +90,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteUserResponse = (userId: string) => {
+    setAllUsers(prev => 
+      prev.map(u => 
+        u.id === userId 
+          ? { ...u, score: undefined, completed: false } 
+          : u
+      )
+    );
+    
+    if (user && user.id === userId) {
+      setUser({ ...user, score: undefined, completed: false });
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('quizUser');
@@ -106,7 +116,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       logout,
       allUsers,
       addUser,
-      updateUserScore
+      updateUserScore,
+      deleteUserResponse
     }}>
       {children}
     </UserContext.Provider>
