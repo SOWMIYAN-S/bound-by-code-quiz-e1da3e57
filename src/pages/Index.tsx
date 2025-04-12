@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,22 +22,22 @@ const Index = () => {
         style={{
           backgroundImage: `linear-gradient(${
             theme === 'dark' 
-              ? 'rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)' 
-              : 'rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8)'}), 
+              ? 'rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.9)' 
+              : 'rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6)'}), 
               url('https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundBlendMode: theme === 'dark' ? 'multiply' : 'overlay'
+          backgroundBlendMode: 'multiply'
         }}
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="text-center md:text-left">
-              <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${theme === 'dark' ? 'text-violet-400' : 'text-violet-900'}`}>
-                Code Quest Season 2
+              <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${theme === 'dark' ? 'text-violet-400' : 'text-white'}`}>
+                Bound By Code
               </h1>
-              <p className={`text-xl mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-violet-700'}`}>
-                Test your coding knowledge and challenge yourself with our interactive Python quiz
+              <p className={`text-xl mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-white/90'}`}>
+                Test your coding knowledge and challenge yourself with our interactive quiz
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
                 <Button 
@@ -49,7 +50,7 @@ const Index = () => {
                 {user && (
                   <Button 
                     variant="outline" 
-                    className={`px-8 py-6 text-lg ${theme === 'dark' ? 'border-violet-700 text-violet-400 hover:bg-violet-900/30' : ''}`}
+                    className={`px-8 py-6 text-lg ${theme === 'dark' ? 'border-violet-700 text-violet-400 hover:bg-violet-900/30' : 'text-white border-white/50 hover:bg-white/20'}`}
                     onClick={() => navigate('/leaderboard')}
                   >
                     View Leaderboard
@@ -73,16 +74,16 @@ const Index = () => {
         style={{
           backgroundImage: `linear-gradient(${
             theme === 'dark' 
-              ? 'rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)' 
-              : 'rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8)'}), 
+              ? 'rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.9)' 
+              : 'rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6)'}), 
               url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundBlendMode: theme === 'dark' ? 'multiply' : 'overlay'
+          backgroundBlendMode: 'multiply'
         }}
       >
-        <div className="container mx-auto px-4">
-          <h2 className={`text-3xl font-bold text-center mb-12 ${theme === 'dark' ? 'text-violet-400' : 'text-violet-800'}`}>
+        <div className="container mx-auto px-4 relative z-10">
+          <h2 className={`text-3xl font-bold text-center mb-12 ${theme === 'dark' ? 'text-violet-400' : 'text-white'}`}>
             About The Challenge
           </h2>
           
@@ -155,21 +156,21 @@ const Index = () => {
         style={{
           backgroundImage: `linear-gradient(${
             theme === 'dark' 
-              ? 'rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)' 
-              : 'rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8)'}), 
+              ? 'rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.9)' 
+              : 'rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6)'}), 
               url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundBlendMode: theme === 'dark' ? 'multiply' : 'overlay'
+          backgroundBlendMode: 'multiply'
         }}
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-violet-400' : 'text-violet-900'}`}>
+            <h2 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-violet-400' : 'text-white'}`}>
               Ready to Test Your Skills?
             </h2>
-            <p className={`text-lg mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-violet-700'}`}>
-              Join the Code Quest challenge and see how you rank against other developers
+            <p className={`text-lg mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-white/90'}`}>
+              Join the Bound By Code challenge and see how you rank against other developers
             </p>
             <Button 
               className="bg-violet-700 hover:bg-violet-800 px-8 py-6 text-lg"
