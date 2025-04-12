@@ -14,11 +14,19 @@ const Index = () => {
     <>
       {/* Hero Section with background image */}
       <section 
-        className={`py-16 md:py-24 bg-cover bg-center ${theme === 'dark' ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-violet-50 to-white'}`}
+        className={`py-16 md:py-24 bg-cover bg-center relative 
+          ${theme === 'dark' 
+            ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white' 
+            : 'bg-gradient-to-b from-white to-gray-50 text-gray-900'}`}
         style={{
-          backgroundImage: `${theme === 'dark' ? 'linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)),' : 'linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)),'} url('https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80')`,
+          backgroundImage: `linear-gradient(${
+            theme === 'dark' 
+              ? 'rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)' 
+              : 'rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8)'}), 
+              url('https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          backgroundBlendMode: theme === 'dark' ? 'multiply' : 'overlay'
         }}
       >
         <div className="container mx-auto px-4">
@@ -58,11 +66,19 @@ const Index = () => {
       
       {/* Features Section with background image */}
       <section 
-        className={`py-16 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}
+        className={`py-16 relative 
+          ${theme === 'dark' 
+            ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white' 
+            : 'bg-gradient-to-b from-white to-gray-50 text-gray-900'}`}
         style={{
-          backgroundImage: `${theme === 'dark' ? 'linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.95)),' : 'linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.95)),'} url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80')`,
+          backgroundImage: `linear-gradient(${
+            theme === 'dark' 
+              ? 'rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)' 
+              : 'rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8)'}), 
+              url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          backgroundBlendMode: theme === 'dark' ? 'multiply' : 'overlay'
         }}
       >
         <div className="container mx-auto px-4">
@@ -132,11 +148,19 @@ const Index = () => {
       
       {/* CTA Section with background image */}
       <section 
-        className={`py-16`}
+        className={`py-16 relative 
+          ${theme === 'dark' 
+            ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white' 
+            : 'bg-gradient-to-b from-white to-gray-50 text-gray-900'}`}
         style={{
-          backgroundImage: `${theme === 'dark' ? 'linear-gradient(rgba(31, 41, 55, 0.85), rgba(31, 41, 55, 0.9)),' : 'linear-gradient(rgba(237, 233, 254, 0.9), rgba(237, 233, 254, 0.95)),'} url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80')`,
+          backgroundImage: `linear-gradient(${
+            theme === 'dark' 
+              ? 'rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)' 
+              : 'rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8)'}), 
+              url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          backgroundBlendMode: theme === 'dark' ? 'multiply' : 'overlay'
         }}
       >
         <div className="container mx-auto px-4">
