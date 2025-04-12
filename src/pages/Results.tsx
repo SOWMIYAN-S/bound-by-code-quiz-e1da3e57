@@ -1,29 +1,71 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { quizQuestions } from '@/data/questions';
 import { Award, ArrowLeft, Home } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Results = () => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [userResult, setUserResult] = useState(user);
   
   useEffect(() => {
-    // Redirect if no user or quiz not completed
+    // Redirect if no user
     if (!user) {
       navigate('/');
+      return;
     }
+    
+    async function fetchUserResult() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('quiz_results')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching user result:', error);
+        } else if (data) {
+          setUserResult(data);
+        } else {
+          setUserResult(user);
+        }
+      } catch (error) {
+        console.error('Error in fetchUserResult:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchUserResult();
   }, [user, navigate]);
 
-  if (!user || user.score === undefined) {
+  if (!user || (!userResult?.score && !loading)) {
     return null;
+  }
+  
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Card>
+          <CardContent className="py-12">
+            <p>Loading your results...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Calculate percentage only when we have a valid score
-  const percentage = Math.round((user.score * 100) / quizQuestions.length);
+  const score = userResult?.score || 0;
+  const percentage = Math.round((score * 100) / quizQuestions.length);
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -32,7 +74,7 @@ const Results = () => {
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-2xl font-bold text-violet-700">Quiz Results</CardTitle>
             <CardDescription>
-              Great job completing the quiz, {user.name}!
+              Great job completing the quiz, {userResult?.name}!
             </CardDescription>
           </CardHeader>
           
@@ -50,7 +92,7 @@ const Results = () => {
             </div>
             
             <div className="text-center">
-              <h3 className="text-xl font-medium">You scored {user.score} out of {quizQuestions.length}</h3>
+              <h3 className="text-xl font-medium">You scored {score} out of {quizQuestions.length}</h3>
               <p className="text-muted-foreground mt-2">
                 {percentage >= 80 
                   ? "Excellent! You've mastered the material." 

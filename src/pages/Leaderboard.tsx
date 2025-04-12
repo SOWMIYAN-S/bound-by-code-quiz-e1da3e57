@@ -1,17 +1,47 @@
 
+import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, Medal, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { quizQuestions } from '@/data/questions';
+import { supabase } from '@/integrations/supabase/client';
 
 const Leaderboard = () => {
   const { allUsers } = useUser();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [leaderboardData, setLeaderboardData] = useState(allUsers);
+  
+  // Fetch leaderboard data directly from Supabase
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('quiz_results')
+          .select('*')
+          .eq('completed', true)
+          .order('score', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching leaderboard:', error);
+        } else if (data) {
+          setLeaderboardData(data);
+        }
+      } catch (error) {
+        console.error('Error in fetchLeaderboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchLeaderboard();
+  }, []);
   
   // Sort users by score (descending)
-  const sortedUsers = [...allUsers]
+  const sortedUsers = [...leaderboardData]
     .filter(user => user.completed)
     .sort((a, b) => (b.score || 0) - (a.score || 0));
 
@@ -30,7 +60,11 @@ const Leaderboard = () => {
           </CardHeader>
           
           <CardContent>
-            {sortedUsers.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Loading leaderboard data...</p>
+              </div>
+            ) : sortedUsers.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No completed quizzes yet.</p>
               </div>

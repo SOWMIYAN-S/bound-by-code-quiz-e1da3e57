@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { quizQuestions } from '@/data/questions';
 import { Download, Users, Search, User, BarChart4, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
   const { allUsers, deleteUserResponse } = useUser();
@@ -16,8 +18,36 @@ const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [adminData, setAdminData] = useState(allUsers);
   
   const ADMIN_PASSWORD = '123123123';
+
+  // Fetch user data directly from Supabase
+  useEffect(() => {
+    async function fetchAllUserData() {
+      if (!isAuthenticated) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('quiz_results')
+          .select('*');
+        
+        if (error) {
+          console.error('Error fetching user data:', error);
+        } else if (data) {
+          setAdminData(data);
+        }
+      } catch (error) {
+        console.error('Error in fetchAllUserData:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchAllUserData();
+  }, [isAuthenticated]);
 
   const handleLogin = () => {
     if (adminPassword === ADMIN_PASSWORD) {
@@ -38,7 +68,7 @@ const AdminDashboard = () => {
       'Percentage'
     ];
     
-    const csvRows = allUsers.map(user => {
+    const csvRows = adminData.map(user => {
       const percentage = user.score 
         ? Math.round(user.score * 100 / quizQuestions.length) 
         : 0;
@@ -68,16 +98,34 @@ const AdminDashboard = () => {
     document.body.removeChild(link);
   };
 
-  const handleDeleteResponse = (userId: string, userName: string) => {
-    deleteUserResponse(userId);
-    toast({
-      title: "Response Deleted",
-      description: `${userName}'s quiz response has been reset. They can now retake the quiz.`,
-      duration: 3000,
-    });
+  const handleDeleteResponse = async (userId: string, userName: string) => {
+    try {
+      await deleteUserResponse(userId);
+      // Refresh data after deletion
+      const { data } = await supabase
+        .from('quiz_results')
+        .select('*');
+      
+      if (data) {
+        setAdminData(data);
+      }
+      
+      toast({
+        title: "Response Deleted",
+        description: `${userName}'s quiz response has been reset. They can now retake the quiz.`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error deleting response:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete response. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const filteredUsers = allUsers.filter(user => 
+  const filteredUsers = adminData.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone.includes(searchTerm)
@@ -120,9 +168,21 @@ const AdminDashboard = () => {
     );
   }
 
-  const completedCount = allUsers.filter(user => user.completed).length;
-  const averageScore = allUsers.length > 0
-    ? allUsers.reduce((sum, user) => sum + (user.score || 0), 0) / allUsers.length
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Card>
+          <CardContent className="py-12">
+            <p>Loading user data...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const completedCount = adminData.filter(user => user.completed).length;
+  const averageScore = adminData.length > 0
+    ? adminData.reduce((sum, user) => sum + (user.score || 0), 0) / adminData.length
     : 0;
 
   return (
@@ -138,7 +198,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="flex items-center">
                 <Users className="h-6 w-6 text-violet-600 mr-2" />
-                <span className="text-2xl font-bold">{allUsers.length}</span>
+                <span className="text-2xl font-bold">{adminData.length}</span>
               </div>
             </CardContent>
           </Card>
