@@ -12,7 +12,7 @@ const Header = () => {
     <header className={`border-b p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}>
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-2xl font-bold">
-          <span className={`text-violet-600 ${theme === 'dark' ? 'text-violet-400' : ''}`}>Python</span> Quiz
+          <span className={`text-violet-600 ${theme === 'dark' ? 'text-violet-400' : ''}`}>Bound By</span> Code
         </Link>
         
         <div className="flex items-center gap-4">

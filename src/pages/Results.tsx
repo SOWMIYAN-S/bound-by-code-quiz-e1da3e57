@@ -18,13 +18,12 @@ const Results = () => {
     }
   }, [user, navigate]);
 
-  if (!user) {
+  if (!user || user.score === undefined) {
     return null;
   }
 
-  const percentage = user.score !== undefined 
-    ? Math.round((user.score * 100) / quizQuestions.length) 
-    : 0;
+  // Calculate percentage only when we have a valid score
+  const percentage = Math.round((user.score * 100) / quizQuestions.length);
   
   return (
     <div className="container mx-auto px-4 py-8">

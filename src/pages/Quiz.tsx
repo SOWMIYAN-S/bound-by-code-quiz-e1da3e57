@@ -19,7 +19,7 @@ const Quiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [difficulty, setDifficulty] = useState('all');
@@ -67,7 +67,7 @@ const Quiz = () => {
     setCurrentQuestion(0);
     setSelectedOption(null);
     setScore(0);
-    setTimeLeft(600);
+    setTimeLeft(3600);
     setIsQuizComplete(false);
   }, [difficulty, category, toast]);
 
@@ -156,8 +156,10 @@ const Quiz = () => {
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   // Calculate progress percentage
