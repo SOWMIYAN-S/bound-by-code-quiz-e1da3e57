@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +22,6 @@ const AdminDashboard = () => {
   
   const ADMIN_PASSWORD = '123123123';
 
-  // Fetch user data directly from Supabase
   useEffect(() => {
     async function fetchAllUserData() {
       if (!isAuthenticated) return;
@@ -101,7 +99,6 @@ const AdminDashboard = () => {
   const handleDeleteResponse = async (userId: string, userName: string) => {
     try {
       await deleteUserResponse(userId);
-      // Refresh data after deletion
       const { data } = await supabase
         .from('quiz_results')
         .select('*');
@@ -358,16 +355,14 @@ const UserTable = ({ users, sortBy, onDeleteResponse }: UserTableProps) => {
                 </span>
               </TableCell>
               <TableCell className="text-right">
-                {user.completed && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onDeleteResponse(user.id, user.name)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => onDeleteResponse(user.id, user.name)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                </Button>
               </TableCell>
             </TableRow>
           );
