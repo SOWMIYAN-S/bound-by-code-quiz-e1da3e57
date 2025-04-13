@@ -1,12 +1,13 @@
 
 import { useState } from "react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis } from "recharts";
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { quizQuestions } from "@/data/questions";
-import { X } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { exportChartAsImage } from "@/utils/chartExport";
 
 interface User {
   id: string;
@@ -57,10 +58,10 @@ const UserPerformance = ({ user, onClose }: UserPerformanceProps) => {
   };
 
   return (
-    <Card className="mt-6 overflow-hidden">
+    <Card className="mt-6 overflow-hidden shadow-md">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">Performance Analysis: {user.name}</CardTitle>
+          <CardTitle className="text-lg font-bold">Performance Analysis: {user.name}</CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X size={18} />
           </Button>
@@ -111,6 +112,7 @@ const UserPerformance = ({ user, onClose }: UserPerformanceProps) => {
               {user.completed && (
                 <div className="h-[300px]">
                   <ChartContainer
+                    id="user-performance-radar"
                     config={{
                       performance: { theme: { light: "rgba(99, 102, 241, 0.7)", dark: "rgba(124, 58, 237, 0.7)" } }
                     }}
@@ -130,6 +132,16 @@ const UserPerformance = ({ user, onClose }: UserPerformanceProps) => {
                       </RadarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
+                  <div className="flex justify-center mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => exportChartAsImage("user-performance-radar", `${user.name}-performance`)}
+                      className="flex items-center gap-1"
+                    >
+                      <Download size={14} /> Export Chart
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -137,26 +149,45 @@ const UserPerformance = ({ user, onClose }: UserPerformanceProps) => {
           
           <TabsContent value="detailed">
             {user.completed ? (
-              <div className="h-[300px]">
+              <div>
                 <h3 className="font-medium mb-2">Time Spent Per Question (Minutes)</h3>
-                <ChartContainer
-                  config={{
-                    time: { theme: { light: "#8b5cf6", dark: "#a78bfa" } }
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={timeSpentData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                <div className="h-[300px]">
+                  <ChartContainer
+                    id="user-time-per-question"
+                    config={{
+                      time: { theme: { light: "#8b5cf6", dark: "#a78bfa" } }
+                    }}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={timeSpentData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 25 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="question" 
+                          label={{ value: "Question Number", position: "bottom", offset: 0, fontSize: 12 }}
+                        />
+                        <YAxis 
+                          label={{ value: "Time (minutes)", angle: -90, position: "insideLeft", fontSize: 12 }}
+                        />
+                        <Tooltip content={<ChartTooltipContent labelFormatter={(value) => `Question: ${value}`} />} />
+                        <Legend />
+                        <Bar dataKey="minutes" name="Time (minutes)" fill="var(--color-time)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                  <div className="flex justify-center mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => exportChartAsImage("user-time-per-question", `${user.name}-time-per-question`)}
+                      className="flex items-center gap-1"
                     >
-                      <XAxis dataKey="question" />
-                      <YAxis />
-                      <Tooltip content={<ChartTooltipContent labelFormatter={(value) => `Question: ${value}`} />} />
-                      <Legend />
-                      <Bar dataKey="minutes" name="Time (minutes)" fill="var(--color-time)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                      <Download size={14} /> Export Chart
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="py-8 text-center">
