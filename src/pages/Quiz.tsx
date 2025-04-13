@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/context/UserContext';
@@ -9,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Clock, ArrowRight, Filter } from 'lucide-react';
 import QuizFilters from '@/components/QuizFilters';
 import { useTheme } from '@/context/ThemeContext';
+import CodeDisplay from '@/components/CodeDisplay';
 
 const Quiz = () => {
   const { user, updateUserScore, allUsers } = useUser();
@@ -173,7 +175,7 @@ const Quiz = () => {
   if (filteredQuestions.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card>
+        <Card className={`${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
           <CardContent className="py-8">
             <p>No questions match your selected filters. Please try different criteria.</p>
             <Button onClick={() => {
@@ -185,6 +187,9 @@ const Quiz = () => {
       </div>
     );
   }
+
+  const currentQuestionData = filteredQuestions[currentQuestion];
+  const hasCodeSnippet = currentQuestionData.text.includes('```python');
 
   return (
     <div className={`container mx-auto px-4 py-8 ${theme === 'dark' ? 'text-white' : ''}`}>
@@ -208,7 +213,7 @@ const Quiz = () => {
         </div>
         
         {showFilters && (
-          <Card className={`mb-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'border-violet-100'}`}>
+          <Card className={`mb-6 ${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
             <CardContent className="pt-6">
               <QuizFilters 
                 difficulty={difficulty}
@@ -230,23 +235,19 @@ const Quiz = () => {
         </div>
         
         <Card className={`shadow-md mb-6 ${
-          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'border-violet-100'
+          theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'
         }`}>
           <CardHeader>
             <CardTitle className={`text-xl ${
               theme === 'dark' ? 'text-white' : 'text-violet-900'
             }`}>
-              {filteredQuestions[currentQuestion].text.includes('```python') ? (
+              {hasCodeSnippet ? (
                 <div>
-                  {filteredQuestions[currentQuestion].text.split('```python').map((part, index) => (
+                  {currentQuestionData.text.split('```python').map((part, index) => (
                     index === 0 ? 
                     <div key={index} className="mb-4 whitespace-pre-line">{part}</div> : 
                     <div key={index}>
-                      <div className={`p-4 rounded-md font-mono text-sm whitespace-pre overflow-x-auto ${
-                        theme === 'dark' ? 'bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {part.split('```')[0]}
-                      </div>
+                      <CodeDisplay code={part.split('```')[0]} language="python" />
                       {part.split('```')[1] && (
                         <div className="mt-4 whitespace-pre-line">{part.split('```')[1]}</div>
                       )}
@@ -254,57 +255,59 @@ const Quiz = () => {
                   ))}
                 </div>
               ) : (
-                <div className="whitespace-pre-line">{filteredQuestions[currentQuestion].text}</div>
+                <div className="whitespace-pre-line">{currentQuestionData.text}</div>
               )}
             </CardTitle>
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {filteredQuestions[currentQuestion].options.map((option, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                  selectedOption === index
-                    ? theme === 'dark' 
-                      ? 'bg-violet-800 text-white' 
-                      : 'bg-violet-600 text-white'
-                    : theme === 'dark'
-                      ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                      : 'bg-secondary hover:bg-violet-100'
-                }`}
-                onClick={() => handleOptionSelect(index)}
-              >
-                <span className="flex items-start">
-                  <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 font-medium ${
-                    theme === 'dark' ? 'bg-gray-600 text-white' : 'bg-white text-violet-700'
-                  }`}>
-                    {String.fromCharCode(65 + index)}
-                  </span>
-                  {option.includes('```python') ? (
-                    <div className="w-full">
-                      {option.split('```python').map((part, idx) => (
-                        idx === 0 ? 
-                        <div key={idx} className="mb-2 whitespace-pre-line">{part}</div> : 
-                        <div key={idx}>
-                          <div className={`p-3 rounded-md font-mono text-sm whitespace-pre overflow-x-auto ${
-                            theme === 'dark' || selectedOption === index 
-                              ? 'bg-gray-900 text-gray-200' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {part.split('```')[0]}
+            {currentQuestionData.options.map((option, index) => {
+              const hasOptionCode = option.includes('```python');
+              
+              return (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                    selectedOption === index
+                      ? theme === 'dark' 
+                        ? 'bg-violet-800 text-white' 
+                        : 'bg-violet-600 text-white'
+                      : theme === 'dark'
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                        : 'bg-secondary hover:bg-violet-100'
+                  }`}
+                  onClick={() => handleOptionSelect(index)}
+                >
+                  <span className="flex items-start">
+                    <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 font-medium ${
+                      theme === 'dark' ? 'bg-gray-600 text-white' : 'bg-white text-violet-700'
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    
+                    {hasOptionCode ? (
+                      <div className="w-full">
+                        {option.split('```python').map((part, idx) => (
+                          idx === 0 ? 
+                          <div key={idx} className="mb-2 whitespace-pre-line">{part}</div> : 
+                          <div key={idx}>
+                            <CodeDisplay 
+                              code={part.split('```')[0]} 
+                              language="python" 
+                            />
+                            {part.split('```')[1] && (
+                              <div className="mt-2 whitespace-pre-line">{part.split('```')[1]}</div>
+                            )}
                           </div>
-                          {part.split('```')[1] && (
-                            <div className="mt-2 whitespace-pre-line">{part.split('```')[1]}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="whitespace-pre-line">{option}</span>
-                  )}
-                </span>
-              </div>
-            ))}
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="whitespace-pre-line">{option}</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
           </CardContent>
           
           <CardFooter>

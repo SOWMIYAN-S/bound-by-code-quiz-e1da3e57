@@ -7,12 +7,14 @@ import { ArrowLeft, Trophy, Medal, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { quizQuestions } from '@/data/questions';
 import { supabase } from '@/integrations/supabase/client';
+import { useTheme } from '@/context/ThemeContext';
 
 const Leaderboard = () => {
   const { allUsers } = useUser();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [leaderboardData, setLeaderboardData] = useState(allUsers);
+  const { theme } = useTheme();
   
   // Fetch leaderboard data directly from Supabase
   useEffect(() => {
@@ -48,13 +50,15 @@ const Leaderboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <Card className="shadow-lg border-violet-100">
+        <Card className={`${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-2">
-              <Trophy size={40} className="text-violet-600" />
+              <Trophy size={40} className={`${theme === 'dark' ? 'text-violet-400' : 'text-violet-600'}`} />
             </div>
-            <CardTitle className="text-2xl font-bold text-violet-700">Leaderboard</CardTitle>
-            <CardDescription>
+            <CardTitle className={`text-2xl sm:text-3xl font-bold font-heading ${theme === 'dark' ? 'text-violet-400' : 'text-violet-700'}`}>
+              Leaderboard
+            </CardTitle>
+            <CardDescription className="text-base">
               Top performers in the Code Quest challenge
             </CardDescription>
           </CardHeader>
@@ -72,7 +76,7 @@ const Leaderboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-violet-200">
+                    <tr className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-violet-200'}`}>
                       <th className="p-3 text-left">Rank</th>
                       <th className="p-3 text-left">Name</th>
                       <th className="p-3 text-right">Score</th>
@@ -86,7 +90,7 @@ const Leaderboard = () => {
                       return (
                         <tr 
                           key={user.id} 
-                          className={`border-b border-violet-100 hover:bg-violet-50 transition-colors ${
+                          className={`border-b ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-700/30' : 'border-violet-100 hover:bg-violet-50'} transition-colors ${
                             index < 3 ? 'font-medium' : ''
                           }`}
                         >

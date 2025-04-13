@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { quizQuestions } from '@/data/questions';
 import { Award, ArrowLeft, Home } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTheme } from '@/context/ThemeContext';
 
 const Results = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userResult, setUserResult] = useState(user);
+  const { theme } = useTheme();
   
   useEffect(() => {
     // Redirect if no user
@@ -54,7 +56,7 @@ const Results = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <Card>
+        <Card className={`${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
           <CardContent className="py-12">
             <p>Loading your results...</p>
           </CardContent>
@@ -70,22 +72,24 @@ const Results = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <Card className="shadow-lg border-violet-100">
+        <Card className={`${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold text-violet-700">Quiz Results</CardTitle>
-            <CardDescription>
+            <CardTitle className={`text-2xl sm:text-3xl font-bold font-heading ${theme === 'dark' ? 'text-violet-400' : 'text-violet-700'}`}>
+              Quiz Results
+            </CardTitle>
+            <CardDescription className="text-base">
               Great job completing the quiz, {userResult?.name}!
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6 pt-6">
             <div className="flex justify-center">
-              <div className="relative w-36 h-36 flex items-center justify-center rounded-full bg-violet-100">
-                <Award size={48} className="text-violet-600" />
+              <div className={`relative w-36 h-36 flex items-center justify-center rounded-full ${theme === 'dark' ? 'bg-violet-900/30' : 'bg-violet-100'}`}>
+                <Award size={48} className={`${theme === 'dark' ? 'text-violet-400' : 'text-violet-600'}`} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <span className="block text-3xl font-bold text-violet-700">{percentage}%</span>
-                    <span className="text-sm text-violet-600">Score</span>
+                    <span className={`block text-3xl font-bold ${theme === 'dark' ? 'text-violet-400' : 'text-violet-700'}`}>{percentage}%</span>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-violet-300' : 'text-violet-600'}`}>Score</span>
                   </div>
                 </div>
               </div>
@@ -113,7 +117,7 @@ const Results = () => {
               
               <Button 
                 onClick={() => navigate('/leaderboard')}
-                className="bg-violet-700 hover:bg-violet-800"
+                className={`${theme === 'dark' ? 'bg-violet-600 hover:bg-violet-700' : 'bg-violet-700 hover:bg-violet-800'}`}
               >
                 View Leaderboard
               </Button>
