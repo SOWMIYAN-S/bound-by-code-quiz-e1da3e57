@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { quizQuestions } from '@/data/questions';
-import { Download, Users, Search, User, BarChart4, Trash2 } from 'lucide-react';
+import { Download, Users, Search, User, BarChart4, Trash2, LineChart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import StatsOverview from '@/components/admin/StatsOverview';
+import UserPerformance from '@/components/admin/UserPerformance';
 
 const AdminDashboard = () => {
   const { allUsers, deleteUserResponse } = useUser();
@@ -19,6 +21,14 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [adminData, setAdminData] = useState(allUsers);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    score?: number;
+    completed?: boolean;
+  } | null>(null);
   
   const ADMIN_PASSWORD = '123123123';
 
@@ -122,6 +132,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleUserSelect = (user: typeof selectedUser) => {
+    setSelectedUser(user);
+  };
+
   const filteredUsers = adminData.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,12 +232,21 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center">
-                <User className="h-6 w-6 text-violet-600 mr-2" />
+                <LineChart className="h-6 w-6 text-violet-600 mr-2" />
                 <span className="text-2xl font-bold">{averageScore.toFixed(2)}</span>
               </div>
             </CardContent>
           </Card>
         </div>
+        
+        <StatsOverview users={adminData} />
+        
+        {selectedUser && (
+          <UserPerformance 
+            user={selectedUser} 
+            onClose={() => setSelectedUser(null)} 
+          />
+        )}
         
         <Card className="shadow-lg border-violet-100">
           <CardHeader>
@@ -259,6 +282,7 @@ const AdminDashboard = () => {
                     users={filteredUsers} 
                     sortBy="score"
                     onDeleteResponse={handleDeleteResponse}
+                    onUserSelect={handleUserSelect}
                   />
                 </div>
               </TabsContent>
@@ -269,6 +293,7 @@ const AdminDashboard = () => {
                     users={filteredUsers.filter(user => user.completed)} 
                     sortBy="score"
                     onDeleteResponse={handleDeleteResponse}
+                    onUserSelect={handleUserSelect}
                   />
                 </div>
               </TabsContent>
@@ -279,6 +304,7 @@ const AdminDashboard = () => {
                     users={filteredUsers.filter(user => !user.completed)} 
                     sortBy="name"
                     onDeleteResponse={handleDeleteResponse}
+                    onUserSelect={handleUserSelect}
                   />
                 </div>
               </TabsContent>
@@ -301,9 +327,10 @@ interface UserTableProps {
   }>;
   sortBy: 'name' | 'score';
   onDeleteResponse: (userId: string, userName: string) => void;
+  onUserSelect: (user: UserTableProps['users'][0]) => void;
 }
 
-const UserTable = ({ users, sortBy, onDeleteResponse }: UserTableProps) => {
+const UserTable = ({ users, sortBy, onDeleteResponse, onUserSelect }: UserTableProps) => {
   const sortedUsers = [...users].sort((a, b) => {
     if (sortBy === 'score') {
       return (b.score || 0) - (a.score || 0);
@@ -336,7 +363,15 @@ const UserTable = ({ users, sortBy, onDeleteResponse }: UserTableProps) => {
             
           return (
             <TableRow key={user.id}>
-              <TableCell>{user.name}</TableCell>
+              <TableCell>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto font-normal text-foreground hover:text-violet-600"
+                  onClick={() => onUserSelect(user)}
+                >
+                  {user.name}
+                </Button>
+              </TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.phone}</TableCell>
               <TableCell className="text-right">
