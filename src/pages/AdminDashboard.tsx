@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -195,6 +196,7 @@ const AdminDashboard = () => {
   const averageScore = adminData.length > 0
     ? adminData.reduce((sum, user) => sum + (user.score || 0), 0) / adminData.length
     : 0;
+  const averagePercentage = Math.round((averageScore / quizQuestions.length) * 100);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -222,6 +224,9 @@ const AdminDashboard = () => {
               <div className="flex items-center">
                 <BarChart4 className="h-6 w-6 text-violet-600 mr-2" />
                 <span className="text-2xl font-bold">{completedCount}</span>
+                <span className="ml-2 text-sm text-muted-foreground">
+                  ({adminData.length > 0 ? Math.round((completedCount / adminData.length) * 100) : 0}%)
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -234,21 +239,15 @@ const AdminDashboard = () => {
               <div className="flex items-center">
                 <LineChart className="h-6 w-6 text-violet-600 mr-2" />
                 <span className="text-2xl font-bold">{averageScore.toFixed(2)}</span>
+                <span className="ml-2 text-sm text-muted-foreground">
+                  ({averagePercentage}%)
+                </span>
               </div>
             </CardContent>
           </Card>
         </div>
         
-        <StatsOverview users={adminData} />
-        
-        {selectedUser && (
-          <UserPerformance 
-            user={selectedUser} 
-            onClose={() => setSelectedUser(null)} 
-          />
-        )}
-        
-        <Card className="shadow-lg border-violet-100">
+        <Card className="shadow-lg border-violet-100 mb-6">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle className="text-xl font-bold text-violet-700">User Data</CardTitle>
@@ -311,6 +310,23 @@ const AdminDashboard = () => {
             </Tabs>
           </CardContent>
         </Card>
+        
+        {/* Overall Statistics Visualizations */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-violet-800 mb-4">Analytics Overview</h2>
+          <StatsOverview users={adminData} />
+        </div>
+        
+        {/* User Performance Card - Placed at the bottom */}
+        {selectedUser && (
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-violet-800 mb-4">User Analysis</h2>
+            <UserPerformance 
+              user={selectedUser} 
+              onClose={() => setSelectedUser(null)} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );

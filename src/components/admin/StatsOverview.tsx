@@ -3,7 +3,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend 
+  PieChart, Pie, Cell, Legend, LineChart, Line,
+  CartesianGrid, Tooltip, AreaChart, Area
 } from "recharts";
 import { quizQuestions } from "@/data/questions";
 
@@ -30,6 +31,20 @@ const StatsOverview = ({ users }: StatsOverviewProps) => {
     { name: "Pending", value: users.filter(user => !user.completed).length }
   ];
   
+  // Calculate average score per question (simulated)
+  const questionPerformance = generateQuestionPerformanceData(quizQuestions.length);
+  
+  // Calculate registrations over time (simulated)
+  const registrationTrend = [
+    { date: 'Apr 1', count: 12 },
+    { date: 'Apr 5', count: 19 },
+    { date: 'Apr 10', count: 31 },
+    { date: 'Apr 15', count: 38 },
+    { date: 'Apr 20', count: 52 },
+    { date: 'Apr 25', count: 61 },
+    { date: 'Apr 30', count: 68 }
+  ];
+  
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE'];
   const COMPLETION_COLORS = ['#4ade80', '#fbbf24'];
 
@@ -50,6 +65,7 @@ const StatsOverview = ({ users }: StatsOverviewProps) => {
                 data={scoreDistribution}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="range" />
                 <YAxis />
                 <ChartTooltip
@@ -99,6 +115,72 @@ const StatsOverview = ({ users }: StatsOverviewProps) => {
           </ChartContainer>
         </CardContent>
       </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Average Score Per Question</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px]">
+          <ChartContainer
+            config={{
+              avgScore: { theme: { light: "#6366f1", dark: "#818cf8" } }
+            }}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={questionPerformance}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="question" />
+                <YAxis domain={[0, 100]} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="averageScore" 
+                  name="Avg. Score (%)" 
+                  stroke="var(--color-avgScore)" 
+                  strokeWidth={2}
+                  activeDot={{ r: 8 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Registration Trend</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px]">
+          <ChartContainer
+            config={{
+              registrations: { theme: { light: "#8b5cf6", dark: "#a78bfa" } }
+            }}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={registrationTrend}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  name="Registrations" 
+                  stroke="var(--color-registrations)" 
+                  fill="var(--color-registrations)" 
+                  fillOpacity={0.2} 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -125,6 +207,14 @@ function calculateScoreDistribution(users: User[]) {
   });
   
   return distribution;
+}
+
+// Helper function to generate simulated question performance data
+function generateQuestionPerformanceData(questionsCount: number) {
+  return Array(questionsCount).fill(0).map((_, i) => ({
+    question: `Q${i + 1}`,
+    averageScore: Math.floor(40 + Math.random() * 50) // Random score between 40-90%
+  }));
 }
 
 export default StatsOverview;
