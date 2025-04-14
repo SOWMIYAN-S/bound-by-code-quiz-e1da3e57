@@ -117,13 +117,6 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
  */
 export const generateCertificate = (userName: string, score: number, totalQuestions: number, certificateId: string) => {
   try {
-    // Create a certificate element
-    const certificateContainer = document.createElement('div');
-    certificateContainer.style.position = 'absolute';
-    certificateContainer.style.left = '-9999px';
-    certificateContainer.style.top = '-9999px';
-    certificateContainer.id = 'certificate-container';
-    
     // Load the certificate image
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -136,7 +129,10 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       canvas.height = img.height;
       
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        console.error('Could not get 2D context');
+        return;
+      }
       
       // Draw certificate background image
       ctx.drawImage(img, 0, 0);
@@ -148,15 +144,15 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       const today = new Date();
       const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
       
-      // Set font for name
-      ctx.font = '48px "Arial", sans-serif';
+      // Set font for name - using Arial as fallback if Shikandara is not available
+      ctx.font = '48px "Shikandar", "Arial", sans-serif';
       ctx.fillStyle = '#ea384c'; // Red color
       ctx.textAlign = 'center';
       
       // Add participant name (centered on the certificate name line)
       ctx.fillText(userName, canvas.width / 2, 450);
       
-      // Add certificate ID below the brain image
+      // Add certificate ID below the brain image - smaller font
       ctx.font = '18px "Arial", sans-serif';
       ctx.fillStyle = '#222'; // Dark gray
       ctx.textAlign = 'center';
@@ -166,20 +162,26 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       const link = document.createElement('a');
       link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
       link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
       
-      // Clean up
-      if (certificateContainer.parentNode) {
-        document.body.removeChild(certificateContainer);
-      }
+      // Make sure the link is visible in the document
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      
+      // Trigger click with a short delay to ensure the canvas is fully rendered
+      setTimeout(() => {
+        link.click();
+        document.body.removeChild(link);
+      }, 100);
     };
     
-    // Add container to DOM for html2canvas to work
-    document.body.appendChild(certificateContainer);
+    // Add error handling for image loading
+    img.onerror = () => {
+      console.error('Failed to load certificate template image');
+      alert('Failed to load certificate template. Please try again later.');
+    };
     
   } catch (error) {
     console.error('Failed to generate certificate:', error);
+    alert('Failed to generate certificate. Please try again.');
   }
 };

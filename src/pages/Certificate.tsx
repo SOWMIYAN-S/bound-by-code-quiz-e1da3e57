@@ -48,6 +48,7 @@ const Certificate = () => {
           description: 'Failed to fetch user data. Please try again.',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
@@ -57,6 +58,7 @@ const Certificate = () => {
           description: 'No records found for this email address. Please register and complete the quiz first.',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
@@ -72,6 +74,7 @@ const Certificate = () => {
           description: `Your score (${percentage}%) is below the required 50% passing score. Please retake the quiz to improve your score.`,
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
@@ -79,12 +82,23 @@ const Certificate = () => {
       const certificateId = `BBCCQ00${data.id.substring(0, 6)}`;
 
       // Generate and download certificate
-      generateCertificate(data.name, score, totalQuestions, certificateId);
-
       toast({
-        title: 'Certificate Generated',
-        description: 'Your certificate has been generated and is downloading now.',
+        title: 'Generating Certificate',
+        description: 'Your certificate is being prepared, please wait...',
       });
+      
+      // Add a small delay to allow toast to appear before certificate generation
+      setTimeout(() => {
+        generateCertificate(data.name, score, totalQuestions, certificateId);
+        
+        toast({
+          title: 'Certificate Generated',
+          description: 'Your certificate has been generated and is downloading now.',
+        });
+        
+        setLoading(false);
+      }, 500);
+      
     } catch (error) {
       console.error('Error generating certificate:', error);
       toast({
@@ -92,7 +106,6 @@ const Certificate = () => {
         description: 'Failed to generate certificate. Please try again.',
         variant: 'destructive',
       });
-    } finally {
       setLoading(false);
     }
   };
