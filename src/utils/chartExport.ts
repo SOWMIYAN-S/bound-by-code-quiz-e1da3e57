@@ -117,25 +117,31 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
  */
 export const generateCertificate = (userName: string, score: number, totalQuestions: number, certificateId: string) => {
   try {
-    // Load the certificate image
+    // Create a certificate using canvas directly
+    const canvas = document.createElement('canvas');
+    const width = 1200;
+    const height = 900;
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get 2D context');
+      return;
+    }
+    
+    // Fill background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Load the certificate template image
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = '/lovable-uploads/434a82e0-842c-4de3-bbcd-6cb73dbb11bb.png';
     
     img.onload = () => {
-      // Create a canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        console.error('Could not get 2D context');
-        return;
-      }
-      
       // Draw certificate background image
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, width, height);
       
       // Calculate percentage score
       const percentage = Math.round((score / totalQuestions) * 100);
@@ -144,34 +150,29 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       const today = new Date();
       const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
       
-      // Set font for name - using Arial as fallback if Shikandara is not available
+      // Set font for name
       ctx.font = '48px "Shikandar", "Arial", sans-serif';
       ctx.fillStyle = '#ea384c'; // Red color
       ctx.textAlign = 'center';
       
       // Add participant name (centered on the certificate name line)
-      ctx.fillText(userName, canvas.width / 2, 450);
+      ctx.fillText(userName, width / 2, 450);
       
       // Add certificate ID below the brain image - smaller font
       ctx.font = '18px "Arial", sans-serif';
       ctx.fillStyle = '#222'; // Dark gray
       ctx.textAlign = 'center';
-      ctx.fillText(certificateId, canvas.width / 2, 900);
+      ctx.fillText(certificateId, width / 2, 900);
       
-      // Convert to image and download
+      // Convert to image and trigger download
+      const dataURL = canvas.toDataURL('image/png');
       const link = document.createElement('a');
+      link.href = dataURL;
       link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
-      link.href = canvas.toDataURL('image/png');
-      
-      // Make sure the link is visible in the document
       link.style.display = 'none';
       document.body.appendChild(link);
-      
-      // Trigger click with a short delay to ensure the canvas is fully rendered
-      setTimeout(() => {
-        link.click();
-        document.body.removeChild(link);
-      }, 100);
+      link.click();
+      document.body.removeChild(link);
     };
     
     // Add error handling for image loading
@@ -179,7 +180,6 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       console.error('Failed to load certificate template image');
       alert('Failed to load certificate template. Please try again later.');
     };
-    
   } catch (error) {
     console.error('Failed to generate certificate:', error);
     alert('Failed to generate certificate. Please try again.');

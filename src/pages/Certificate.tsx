@@ -78,26 +78,36 @@ const Certificate = () => {
         return;
       }
 
-      // Generate certificate ID
+      // Generate certificate ID (using user ID to ensure uniqueness)
       const certificateId = `BBCCQ00${data.id.substring(0, 6)}`;
 
-      // Generate and download certificate
+      // Show generating toast
       toast({
         title: 'Generating Certificate',
         description: 'Your certificate is being prepared, please wait...',
       });
       
-      // Add a small delay to allow toast to appear before certificate generation
+      // Add a small delay to ensure proper loading of resources
       setTimeout(() => {
-        generateCertificate(data.name, score, totalQuestions, certificateId);
-        
-        toast({
-          title: 'Certificate Generated',
-          description: 'Your certificate has been generated and is downloading now.',
-        });
-        
-        setLoading(false);
-      }, 500);
+        try {
+          // Generate and download certificate
+          generateCertificate(data.name, score, totalQuestions, certificateId);
+          
+          toast({
+            title: 'Certificate Generated',
+            description: 'Your certificate has been successfully generated and is downloading now.',
+          });
+        } catch (certError) {
+          console.error('Certificate generation error:', certError);
+          toast({
+            title: 'Generation Error',
+            description: 'There was a problem generating your certificate. Please try again.',
+            variant: 'destructive',
+          });
+        } finally {
+          setLoading(false);
+        }
+      }, 800); // Slightly longer delay to ensure image loads
       
     } catch (error) {
       console.error('Error generating certificate:', error);
