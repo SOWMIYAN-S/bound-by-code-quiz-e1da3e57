@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Medal, Award } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Award, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { quizQuestions } from '@/data/questions';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/context/ThemeContext';
+import { exportElementAsImage } from '@/utils/chartExport';
 
 const Leaderboard = () => {
   const { allUsers } = useUser();
@@ -47,10 +48,15 @@ const Leaderboard = () => {
     .filter(user => user.completed)
     .sort((a, b) => (b.score || 0) - (a.score || 0));
 
+  // Export the leaderboard as an image
+  const handleExportLeaderboard = () => {
+    exportElementAsImage('#leaderboard-content', 'quiz-leaderboard');
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <Card className={`${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
+        <Card id="leaderboard-content" className={`${theme === 'dark' ? 'card-enhanced-dark' : 'card-enhanced'}`}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-2">
               <Trophy size={40} className={`${theme === 'dark' ? 'text-violet-400' : 'text-violet-600'}`} />
@@ -117,17 +123,25 @@ const Leaderboard = () => {
                 </table>
               </div>
             )}
-            
-            <div className="mt-6 flex justify-center">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate(-1)}
-                className="flex items-center"
-              >
-                <ArrowLeft size={16} className="mr-2" /> Go Back
-              </Button>
-            </div>
           </CardContent>
+          
+          <CardFooter className="flex justify-between mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(-1)}
+              className="flex items-center"
+            >
+              <ArrowLeft size={16} className="mr-2" /> Go Back
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleExportLeaderboard}
+              className="flex items-center gap-1"
+            >
+              <Download size={16} /> Export
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </div>
