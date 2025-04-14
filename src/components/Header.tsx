@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import ThemeToggle from "./ThemeToggle";
 import { useTheme } from "@/context/ThemeContext";
-import { Menu, X } from "lucide-react";
+import { Menu, X, FileCheck } from "lucide-react";
 import { useState } from "react";
 
 const Header = () => {
@@ -55,6 +55,14 @@ const Header = () => {
                     </Link>
                   </li>
                   <li>
+                    <Link 
+                      to="/certificate"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Certificate
+                    </Link>
+                  </li>
+                  <li>
                     <button 
                       onClick={logout}
                       className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
@@ -79,6 +87,14 @@ const Header = () => {
                       className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
                     >
                       Leaderboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/verify-certificate"
+                      className={`hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                    >
+                      Verify Certificate
                     </Link>
                   </li>
                 </>
@@ -136,6 +152,15 @@ const Header = () => {
                     </Link>
                   </li>
                   <li>
+                    <Link 
+                      to="/certificate"
+                      className={`block py-2 hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                      onClick={toggleMobileMenu}
+                    >
+                      Certificate
+                    </Link>
+                  </li>
+                  <li>
                     <button 
                       onClick={() => {
                         logout();
@@ -165,6 +190,15 @@ const Header = () => {
                       onClick={toggleMobileMenu}
                     >
                       Leaderboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/verify-certificate"
+                      className={`block py-2 hover:text-violet-600 ${theme === 'dark' ? 'hover:text-violet-400' : ''}`}
+                      onClick={toggleMobileMenu}
+                    >
+                      Verify Certificate
                     </Link>
                   </li>
                 </>

@@ -5,7 +5,7 @@ import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { quizQuestions } from '@/data/questions';
-import { Award, ArrowLeft, Home } from 'lucide-react';
+import { Award, ArrowLeft, Home, FileCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -68,6 +68,7 @@ const Results = () => {
   // Calculate percentage only when we have a valid score
   const score = userResult?.score || 0;
   const percentage = Math.round((score * 100) / quizQuestions.length);
+  const isPassing = percentage >= 50;
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -102,8 +103,18 @@ const Results = () => {
                   ? "Excellent! You've mastered the material." 
                   : percentage >= 60
                     ? "Good work! You've got a solid understanding."
-                    : "You've completed the quiz. Keep learning and try again!"}
+                    : percentage >= 50
+                      ? "Congratulations! You've passed the quiz."
+                      : "You've completed the quiz. Keep learning and try again!"}
               </p>
+              
+              {isPassing && (
+                <div className="mt-4">
+                  <p className="text-green-600 dark:text-green-400">
+                    You've qualified for a certificate!
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
@@ -121,6 +132,16 @@ const Results = () => {
               >
                 View Leaderboard
               </Button>
+              
+              {isPassing && (
+                <Button 
+                  onClick={() => navigate('/certificate')}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <FileCheck size={16} className="mr-2" /> Get Certificate
+                </Button>
+              )}
               
               <Button 
                 variant="outline" 

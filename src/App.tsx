@@ -12,6 +12,8 @@ import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
 import Leaderboard from "./pages/Leaderboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Certificate from "./pages/Certificate";
+import VerifyCertificate from "./pages/VerifyCertificate";
 import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -35,6 +37,8 @@ const App = () => (
                   <Route path="/quiz" element={<Quiz />} />
                   <Route path="/results" element={<Results />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/certificate" element={<Certificate />} />
+                  <Route path="/verify-certificate" element={<VerifyCertificate />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

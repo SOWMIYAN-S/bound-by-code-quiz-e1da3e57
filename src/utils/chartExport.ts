@@ -111,3 +111,75 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
     console.error('Failed to export element:', error);
   }
 };
+
+/**
+ * Generate and download a certificate for a user
+ */
+export const generateCertificate = (userName: string, score: number, totalQuestions: number, certificateId: string) => {
+  try {
+    // Create a certificate element
+    const certificateContainer = document.createElement('div');
+    certificateContainer.style.position = 'absolute';
+    certificateContainer.style.left = '-9999px';
+    certificateContainer.style.top = '-9999px';
+    certificateContainer.id = 'certificate-container';
+    
+    // Load the certificate image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = '/lovable-uploads/434a82e0-842c-4de3-bbcd-6cb73dbb11bb.png';
+    
+    img.onload = () => {
+      // Create a canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Draw certificate background image
+      ctx.drawImage(img, 0, 0);
+      
+      // Calculate percentage score
+      const percentage = Math.round((score / totalQuestions) * 100);
+      
+      // Add the certificate date
+      const today = new Date();
+      const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+      
+      // Set font for name
+      ctx.font = '48px "Arial", sans-serif';
+      ctx.fillStyle = '#ea384c'; // Red color
+      ctx.textAlign = 'center';
+      
+      // Add participant name (centered on the certificate name line)
+      ctx.fillText(userName, canvas.width / 2, 450);
+      
+      // Add certificate ID below the brain image
+      ctx.font = '18px "Arial", sans-serif';
+      ctx.fillStyle = '#222'; // Dark gray
+      ctx.textAlign = 'center';
+      ctx.fillText(certificateId, canvas.width / 2, 900);
+      
+      // Convert to image and download
+      const link = document.createElement('a');
+      link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      if (certificateContainer.parentNode) {
+        document.body.removeChild(certificateContainer);
+      }
+    };
+    
+    // Add container to DOM for html2canvas to work
+    document.body.appendChild(certificateContainer);
+    
+  } catch (error) {
+    console.error('Failed to generate certificate:', error);
+  }
+};
