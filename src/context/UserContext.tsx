@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,7 +29,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast();
 
-  // Load user from localStorage on initial render
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('quizUser');
@@ -44,7 +42,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Fetch all users from Supabase
   useEffect(() => {
     async function fetchAllUsers() {
       try {
@@ -68,7 +65,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     fetchAllUsers();
   }, []);
 
-  // Save user to localStorage when it changes
   useEffect(() => {
     try {
       if (user) {
@@ -83,7 +79,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const addUser = async (newUser: User) => {
     try {
-      // Check if user already exists in Supabase
       const { data: existingUser, error: checkError } = await supabase
         .from('quiz_results')
         .select('*')
@@ -95,7 +90,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (existingUser) {
-        // Update existing user data in Supabase
         const { error: updateError } = await supabase
           .from('quiz_results')
           .update({
@@ -108,7 +102,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           console.error('Error updating user in Supabase:', updateError);
         }
         
-        // Update local state
         setAllUsers(prev => 
           prev.map(u => u.email === newUser.email 
             ? { ...u, name: newUser.name, phone: newUser.phone } 
@@ -116,12 +109,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           )
         );
       } else {
-        // Insert new user into Supabase
         const { error: insertError } = await supabase
           .from('quiz_results')
           .insert({
             id: newUser.id,
-            user_id: newUser.id, // Using the same ID for user_id
+            user_id: newUser.id,
             name: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
@@ -137,7 +129,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             variant: "destructive",
           });
         } else {
-          // Update local state
           setAllUsers(prev => [...prev, newUser]);
         }
       }
@@ -148,7 +139,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserScore = async (userId: string, score: number, completed = false) => {
     try {
-      // Update user score in Supabase
       const { error } = await supabase
         .from('quiz_results')
         .update({ score, completed })
@@ -162,7 +152,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           variant: "destructive",
         });
       } else {
-        // Update local state
         setAllUsers(prev => 
           prev.map(u => 
             u.id === userId 
@@ -182,11 +171,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteUserResponse = async (userId: string) => {
     try {
-      // Reset user score in Supabase
       const { error } = await supabase
         .from('quiz_results')
         .update({ score: null, completed: false })
-        .eq('user_id', userId);
+        .eq('id', userId);
       
       if (error) {
         console.error('Error resetting user response in Supabase:', error);
@@ -196,7 +184,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           variant: "destructive",
         });
       } else {
-        // Update local state
         setAllUsers(prev => 
           prev.map(u => 
             u.id === userId 
