@@ -55,11 +55,21 @@ const VerifyCertificate = () => {
 
       if (error) {
         console.error('Error verifying certificate:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to verify certificate. Please try again.',
-          variant: 'destructive',
-        });
+        
+        // Special handling for permission errors
+        if (error.code === '18' || error.code === '42501' || error.message.includes('permission') || error.message.includes('denied')) {
+          toast({
+            title: 'Access Restricted',
+            description: 'Unable to verify certificate due to permission restrictions. Please try logging in first.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to verify certificate. Please try again.',
+            variant: 'destructive',
+          });
+        }
         setResult(null);
         return;
       }

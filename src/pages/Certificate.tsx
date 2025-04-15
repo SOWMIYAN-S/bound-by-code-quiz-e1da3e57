@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { quizQuestions } from '@/data/questions';
 import { useTheme } from '@/context/ThemeContext';
 import { generateCertificate } from '@/utils/chartExport';
+import { useUser } from '@/context/UserContext';
 
 const Certificate = () => {
   const [email, setEmail] = useState('');
@@ -17,13 +18,17 @@ const Certificate = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { user } = useUser();
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
   };
 
   const checkEligibilityAndDownload = async () => {
-    if (!email.trim() || !email.includes('@')) {
+    // If user is logged in, use their email automatically
+    const emailToCheck = user?.email || email;
+    
+    if (!emailToCheck.trim() || !emailToCheck.includes('@')) {
       toast({
         title: 'Invalid Email',
         description: 'Please enter a valid email address.',
@@ -40,21 +45,43 @@ const Certificate = () => {
         description: 'Verifying your quiz results...',
       });
 
-      // Query the database for the user with the provided email
+      // Try to get the data from the user context first if available
+      if (user && user.email === emailToCheck && user.score !== undefined) {
+        // User already has score data in context
+        const score = user.score;
+        const totalQuestions = quizQuestions.length;
+        const percentage = Math.round((score / totalQuestions) * 100);
+        
+        if (percentage < 50) {
+          toast({
+            title: 'Not Eligible',
+            description: `Your score (${percentage}%) is below the required 50% passing score. Please retake the quiz to improve your score.`,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+        
+        // Generate certificate using data from context
+        generateCertificateForUser(user.name, score, totalQuestions, user.id);
+        return;
+      }
+
+      // If not available in context, query the database
       const { data, error } = await supabase
         .from('quiz_results')
         .select('*')
-        .eq('email', email)
+        .eq('email', emailToCheck)
         .maybeSingle();
 
       if (error) {
         console.error('Error fetching user data:', error);
         
-        // Special handling for permission errors (likely RLS related)
-        if (error.code === '18' || error.message.includes('denied')) {
+        // Special handling for permission errors
+        if (error.code === '18' || error.code === '42501' || error.message.includes('permission') || error.message.includes('denied')) {
           toast({
-            title: 'Access Error',
-            description: 'Unable to access quiz data due to permission restrictions. Please try again later.',
+            title: 'Access Restricted',
+            description: 'Unable to access quiz data due to permission restrictions. Please try logging in first.',
             variant: 'destructive',
           });
         } else {
@@ -95,42 +122,9 @@ const Certificate = () => {
         return;
       }
 
-      // Generate certificate ID (using user ID to ensure uniqueness)
-      const certificateId = `BBCCQ00${data.id.substring(0, 6)}`;
-
-      toast({
-        title: 'Generating Certificate',
-        description: 'Your certificate is being prepared, please wait...',
-      });
+      // Generate certificate
+      generateCertificateForUser(data.name, score, totalQuestions, data.id);
       
-      // Generate and download the certificate
-      setTimeout(() => {
-        try {
-          // Generate certificate with the new approach that doesn't rely on external image
-          const success = generateCertificate(data.name, score, totalQuestions, certificateId);
-          
-          if (success !== false) {
-            toast({
-              title: 'Certificate Generated',
-              description: 'Your certificate has been successfully generated and is downloading now.',
-            });
-          } else {
-            toast({
-              title: 'Generation Error',
-              description: 'There was a problem generating your certificate. Please try again.',
-              variant: 'destructive',
-            });
-          }
-        } catch (certError) {
-          console.error('Certificate generation error:', certError);
-          toast({
-            title: 'Generation Error',
-            description: 'There was a problem generating your certificate. Please try again.',
-            variant: 'destructive',
-          });
-        }
-        setLoading(false);
-      }, 500); // Add slight delay to ensure UI updates properly
     } catch (error) {
       console.error('Error generating certificate:', error);
       toast({
@@ -140,6 +134,45 @@ const Certificate = () => {
       });
       setLoading(false);
     }
+  };
+
+  // Helper function to generate and handle certificate creation
+  const generateCertificateForUser = (name: string, score: number, totalQuestions: number, userId: string) => {
+    toast({
+      title: 'Generating Certificate',
+      description: 'Your certificate is being prepared, please wait...',
+    });
+    
+    // Certificate ID from user ID
+    const certificateId = `BBCCQ00${userId.substring(0, 6)}`;
+    
+    // Add slight delay to ensure UI updates properly before generating certificate
+    setTimeout(() => {
+      try {
+        const success = generateCertificate(name, score, totalQuestions, certificateId);
+        
+        if (success !== false) {
+          toast({
+            title: 'Certificate Generated',
+            description: 'Your certificate has been successfully generated and is downloading now.',
+          });
+        } else {
+          toast({
+            title: 'Generation Error',
+            description: 'There was a problem generating your certificate. Please try again.',
+            variant: 'destructive',
+          });
+        }
+      } catch (certError) {
+        console.error('Certificate generation error:', certError);
+        toast({
+          title: 'Generation Error',
+          description: 'There was a problem generating your certificate. Please try again.',
+          variant: 'destructive',
+        });
+      }
+      setLoading(false);
+    }, 500);
   };
 
   return (
@@ -154,27 +187,40 @@ const Certificate = () => {
               Certificate Download
             </CardTitle>
             <CardDescription className="text-base">
-              Enter your email to download your quiz certificate
+              {user ? 'Click below to download your quiz certificate' : 'Enter your email to download your quiz certificate'}
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email Address
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter the email you used for registration"
-                value={email}
-                onChange={handleEmailChange}
-                className="w-full"
-              />
-              <p className="text-sm text-muted-foreground">
-                You must have completed the quiz with a score of 50% or higher to be eligible.
-              </p>
-            </div>
+            {!user && (
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium">
+                  Email Address
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter the email you used for registration"
+                  value={email}
+                  onChange={handleEmailChange}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">
+                  You must have completed the quiz with a score of 50% or higher to be eligible.
+                </p>
+              </div>
+            )}
+            
+            {user && (
+              <div className="text-center py-2">
+                <p className="text-sm">
+                  Logged in as <span className="font-medium">{user.email}</span>
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your certificate will be generated based on your quiz results.
+                </p>
+              </div>
+            )}
           </CardContent>
           
           <CardFooter className="flex flex-col sm:flex-row gap-4 justify-center">
