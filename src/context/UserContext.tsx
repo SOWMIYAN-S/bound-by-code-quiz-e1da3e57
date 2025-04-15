@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -47,18 +48,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data, error } = await supabase
           .from('quiz_results')
-          .select('*');
-        
-        if (error) {
-          console.error('Error fetching users:', error);
-          return;
-        }
+          .select('*')
+          .throwOnError(); // Add this to throw errors
         
         if (data) {
           setAllUsers(data);
         }
       } catch (error) {
-        console.error('Error in fetchAllUsers:', error);
+        console.error('Error fetching users:', error);
+        toast({
+          title: 'Data Fetch Error',
+          description: 'Unable to load user data. Please check your connection.',
+          variant: 'destructive'
+        });
       }
     }
     
