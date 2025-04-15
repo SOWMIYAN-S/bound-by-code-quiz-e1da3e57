@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ const Certificate = () => {
 
     setLoading(true);
     try {
-      // Show generating toast first
+      // Show checking eligibility toast
       toast({
         title: 'Checking Eligibility',
         description: 'Verifying your quiz results...',
@@ -48,15 +49,26 @@ const Certificate = () => {
 
       if (error) {
         console.error('Error fetching user data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch user data. Please try again.',
-          variant: 'destructive',
-        });
+        
+        // Special handling for permission errors (likely RLS related)
+        if (error.code === '18' || error.message.includes('denied')) {
+          toast({
+            title: 'Access Error',
+            description: 'Unable to access quiz data due to permission restrictions. Please try again later.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to fetch user data. Please try again.',
+            variant: 'destructive',
+          });
+        }
         setLoading(false);
         return;
       }
 
+      // Handle case where user not found
       if (!data) {
         toast({
           title: 'User Not Found',
@@ -91,23 +103,34 @@ const Certificate = () => {
         description: 'Your certificate is being prepared, please wait...',
       });
       
-      // Generate certificate with the new approach that doesn't rely on external image
-      const success = generateCertificate(data.name, score, totalQuestions, certificateId);
-      
-      if (success !== false) {
-        toast({
-          title: 'Certificate Generated',
-          description: 'Your certificate has been successfully generated and is downloading now.',
-        });
-      } else {
-        toast({
-          title: 'Generation Error',
-          description: 'There was a problem generating your certificate. Please try again.',
-          variant: 'destructive',
-        });
-      }
-      
-      setLoading(false);
+      // Generate and download the certificate
+      setTimeout(() => {
+        try {
+          // Generate certificate with the new approach that doesn't rely on external image
+          const success = generateCertificate(data.name, score, totalQuestions, certificateId);
+          
+          if (success !== false) {
+            toast({
+              title: 'Certificate Generated',
+              description: 'Your certificate has been successfully generated and is downloading now.',
+            });
+          } else {
+            toast({
+              title: 'Generation Error',
+              description: 'There was a problem generating your certificate. Please try again.',
+              variant: 'destructive',
+            });
+          }
+        } catch (certError) {
+          console.error('Certificate generation error:', certError);
+          toast({
+            title: 'Generation Error',
+            description: 'There was a problem generating your certificate. Please try again.',
+            variant: 'destructive',
+          });
+        }
+        setLoading(false);
+      }, 500); // Add slight delay to ensure UI updates properly
     } catch (error) {
       console.error('Error generating certificate:', error);
       toast({
