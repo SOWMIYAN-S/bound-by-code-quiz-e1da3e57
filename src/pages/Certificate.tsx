@@ -34,6 +34,12 @@ const Certificate = () => {
 
     setLoading(true);
     try {
+      // Show generating toast first
+      toast({
+        title: 'Checking Eligibility',
+        description: 'Verifying your quiz results...',
+      });
+
       // Query the database for the user with the provided email
       const { data, error } = await supabase
         .from('quiz_results')
@@ -81,33 +87,48 @@ const Certificate = () => {
       // Generate certificate ID (using user ID to ensure uniqueness)
       const certificateId = `BBCCQ00${data.id.substring(0, 6)}`;
 
-      // Show generating toast
+      // Generate and download certificate
       toast({
         title: 'Generating Certificate',
         description: 'Your certificate is being prepared, please wait...',
       });
       
-      // Add a small delay to ensure proper loading of resources
-      setTimeout(() => {
-        try {
-          // Generate and download certificate
-          generateCertificate(data.name, score, totalQuestions, certificateId);
-          
-          toast({
-            title: 'Certificate Generated',
-            description: 'Your certificate has been successfully generated and is downloading now.',
-          });
-        } catch (certError) {
-          console.error('Certificate generation error:', certError);
-          toast({
-            title: 'Generation Error',
-            description: 'There was a problem generating your certificate. Please try again.',
-            variant: 'destructive',
-          });
-        } finally {
-          setLoading(false);
-        }
-      }, 800); // Slightly longer delay to ensure image loads
+      // Pre-load the certificate template to ensure it's in the cache
+      const preloadImg = new Image();
+      preloadImg.src = '/lovable-uploads/24cb3508-1ded-4e16-bdd3-c557685344db.png';
+      
+      preloadImg.onload = () => {
+        // Wait a bit to make sure the image is fully loaded
+        setTimeout(() => {
+          try {
+            generateCertificate(data.name, score, totalQuestions, certificateId);
+            
+            toast({
+              title: 'Certificate Generated',
+              description: 'Your certificate has been successfully generated and is downloading now.',
+            });
+          } catch (certError) {
+            console.error('Certificate generation error:', certError);
+            toast({
+              title: 'Generation Error',
+              description: 'There was a problem generating your certificate. Please try again.',
+              variant: 'destructive',
+            });
+          } finally {
+            setLoading(false);
+          }
+        }, 1000);
+      };
+      
+      preloadImg.onerror = () => {
+        console.error('Failed to preload certificate template');
+        toast({
+          title: 'Template Error',
+          description: 'Failed to load certificate template. Please try again later.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+      };
       
     } catch (error) {
       console.error('Error generating certificate:', error);

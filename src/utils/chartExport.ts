@@ -137,7 +137,7 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
     // Load the certificate template image
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = '/lovable-uploads/434a82e0-842c-4de3-bbcd-6cb73dbb11bb.png';
+    img.src = '/lovable-uploads/24cb3508-1ded-4e16-bdd3-c557685344db.png';
     
     img.onload = () => {
       // Draw certificate background image
@@ -150,19 +150,19 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       const today = new Date();
       const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
       
-      // Set font for name
-      ctx.font = '48px "Shikandar", "Arial", sans-serif';
+      // Set font for name on the dotted line
+      ctx.font = "48px 'Shikandar', 'Arial', sans-serif";
       ctx.fillStyle = '#ea384c'; // Red color
       ctx.textAlign = 'center';
       
-      // Add participant name (centered on the certificate name line)
+      // Add participant name centered on the dotted line (near vertically centered)
       ctx.fillText(userName, width / 2, 450);
       
       // Add certificate ID below the brain image - smaller font
-      ctx.font = '18px "Arial", sans-serif';
-      ctx.fillStyle = '#222'; // Dark gray
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#222';
       ctx.textAlign = 'center';
-      ctx.fillText(certificateId, width / 2, 900);
+      ctx.fillText(certificateId, width / 2, 815);
       
       // Convert to image and trigger download
       const dataURL = canvas.toDataURL('image/png');
@@ -176,8 +176,8 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
     };
     
     // Add error handling for image loading
-    img.onerror = () => {
-      console.error('Failed to load certificate template image');
+    img.onerror = (error) => {
+      console.error('Failed to load certificate template image', error);
       alert('Failed to load certificate template. Please try again later.');
     };
   } catch (error) {
