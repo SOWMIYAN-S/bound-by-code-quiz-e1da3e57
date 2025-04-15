@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,49 +86,28 @@ const Certificate = () => {
       // Generate certificate ID (using user ID to ensure uniqueness)
       const certificateId = `BBCCQ00${data.id.substring(0, 6)}`;
 
-      // Generate and download certificate
       toast({
         title: 'Generating Certificate',
         description: 'Your certificate is being prepared, please wait...',
       });
       
-      // Pre-load the certificate template to ensure it's in the cache
-      const preloadImg = new Image();
-      preloadImg.src = '/lovable-uploads/24cb3508-1ded-4e16-bdd3-c557685344db.png';
+      // Generate certificate with the new approach that doesn't rely on external image
+      const success = generateCertificate(data.name, score, totalQuestions, certificateId);
       
-      preloadImg.onload = () => {
-        // Wait a bit to make sure the image is fully loaded
-        setTimeout(() => {
-          try {
-            generateCertificate(data.name, score, totalQuestions, certificateId);
-            
-            toast({
-              title: 'Certificate Generated',
-              description: 'Your certificate has been successfully generated and is downloading now.',
-            });
-          } catch (certError) {
-            console.error('Certificate generation error:', certError);
-            toast({
-              title: 'Generation Error',
-              description: 'There was a problem generating your certificate. Please try again.',
-              variant: 'destructive',
-            });
-          } finally {
-            setLoading(false);
-          }
-        }, 1000);
-      };
-      
-      preloadImg.onerror = () => {
-        console.error('Failed to preload certificate template');
+      if (success !== false) {
         toast({
-          title: 'Template Error',
-          description: 'Failed to load certificate template. Please try again later.',
+          title: 'Certificate Generated',
+          description: 'Your certificate has been successfully generated and is downloading now.',
+        });
+      } else {
+        toast({
+          title: 'Generation Error',
+          description: 'There was a problem generating your certificate. Please try again.',
           variant: 'destructive',
         });
-        setLoading(false);
-      };
+      }
       
+      setLoading(false);
     } catch (error) {
       console.error('Error generating certificate:', error);
       toast({

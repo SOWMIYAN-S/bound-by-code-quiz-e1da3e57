@@ -1,4 +1,3 @@
-
 /**
  * Utility function to export a chart as an image
  */
@@ -130,58 +129,92 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       return;
     }
     
-    // Fill background
+    // Fill background with white first
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
     
-    // Load the certificate template image
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = '/lovable-uploads/24cb3508-1ded-4e16-bdd3-c557685344db.png';
+    // Create a simple certificate without depending on external image
+    // Draw border
+    ctx.strokeStyle = '#8b5cf6'; // Violet color matching theme
+    ctx.lineWidth = 15;
+    ctx.strokeRect(50, 50, width - 100, height - 100);
     
-    img.onload = () => {
-      // Draw certificate background image
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Calculate percentage score
-      const percentage = Math.round((score / totalQuestions) * 100);
-      
-      // Add the certificate date
-      const today = new Date();
-      const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-      
-      // Set font for name on the dotted line
-      ctx.font = "48px 'Shikandar', 'Arial', sans-serif";
-      ctx.fillStyle = '#ea384c'; // Red color
-      ctx.textAlign = 'center';
-      
-      // Add participant name centered on the dotted line (near vertically centered)
-      ctx.fillText(userName, width / 2, 450);
-      
-      // Add certificate ID below the brain image - smaller font
-      ctx.font = '12px Arial';
-      ctx.fillStyle = '#222';
-      ctx.textAlign = 'center';
-      ctx.fillText(certificateId, width / 2, 815);
-      
-      // Convert to image and trigger download
-      const dataURL = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
+    // Draw inner border
+    ctx.strokeStyle = '#a78bfa'; // Lighter violet
+    ctx.lineWidth = 5;
+    ctx.strokeRect(80, 80, width - 160, height - 160);
     
-    // Add error handling for image loading
-    img.onerror = (error) => {
-      console.error('Failed to load certificate template image', error);
-      alert('Failed to load certificate template. Please try again later.');
-    };
+    // Add certificate title
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = '#7c3aed'; // Deep violet
+    ctx.textAlign = 'center';
+    ctx.fillText('Certificate of Completion', width / 2, 200);
+    
+    // Add subtitle
+    ctx.font = 'bold 30px Arial';
+    ctx.fillStyle = '#4c1d95'; // Dark violet
+    ctx.fillText('Brain Based Quiz Challenge', width / 2, 260);
+    
+    // Add "This is to certify that" text
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#1f2937';
+    ctx.fillText('This is to certify that', width / 2, 350);
+    
+    // Draw line for name
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - 250, 460);
+    ctx.lineTo(width / 2 + 250, 460);
+    ctx.stroke();
+    
+    // Add participant name centered on the dotted line
+    ctx.font = "48px Arial";
+    ctx.fillStyle = '#ea384c'; // Red color
+    ctx.textAlign = 'center';
+    ctx.fillText(userName, width / 2, 450);
+    
+    // Add completion text
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#1f2937';
+    ctx.fillText(`has successfully completed the Brain Based Quiz with a score of`, width / 2, 520);
+    
+    // Add score
+    const percentage = Math.round((score / totalQuestions) * 100);
+    ctx.font = 'bold 36px Arial';
+    ctx.fillStyle = '#4c1d95';
+    ctx.fillText(`${score}/${totalQuestions} (${percentage}%)`, width / 2, 580);
+    
+    // Add date
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#1f2937';
+    ctx.fillText(`Date: ${formattedDate}`, width / 2, 650);
+    
+    // Add certificate ID
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 720);
+    
+    // Add watermark text
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#d1d5db';
+    ctx.fillText('Brain Based Quiz Challenge Certificate - Verify at brainquiz.com/verify', width / 2, 815);
+    
+    // Convert to image and trigger download
+    const dataURL = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    return true;
   } catch (error) {
     console.error('Failed to generate certificate:', error);
-    alert('Failed to generate certificate. Please try again.');
+    return false;
   }
 };
