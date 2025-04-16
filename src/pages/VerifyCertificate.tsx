@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,10 +16,6 @@ interface VerificationResult {
   score?: number;
   percentage?: number;
   date?: string;
-  register_number?: string;
-  class?: string;
-  correct_answers?: number;
-  attended_questions?: number;
 }
 
 const VerifyCertificate = () => {
@@ -53,42 +42,46 @@ const VerifyCertificate = () => {
 
     setLoading(true);
     try {
-      const certPrefix = certificateId.substring(0, 7); // 'BBCCQ20'
-      const certIdPart = certificateId.substring(7);    // '01'
-      const userId = parseInt(certIdPart);              // convert '01' to 1
-
-      const { data, error } = await supabase
+      // Extract the numeric part from certificate ID (e.g., "01" from "BBCCQ2001")
+      const certNumber = parseInt(certificateId.substring(7), 10);
+      
+      // Get all results ordered by created_at to match certificate numbers
+      const { data: allResults, error } = await supabase
         .from('quiz_results')
         .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+        .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Supabase error:', error.message);
+        console.error('Error fetching results:', error);
         toast({
-          title: 'Error',
-          description: 'Verification failed due to database error',
+          title: 'Database Error',
+          description: 'Failed to fetch certificate data.',
           variant: 'destructive',
         });
         setResult(null);
         return;
       }
 
-      if (!data) {
-        console.log('No data found for ID:', userId);
+      // Check if the certificate number is valid
+      if (!allResults || certNumber < 1 || certNumber > allResults.length) {
         toast({
           title: 'Invalid Certificate',
-          description: 'This certificate could not be verified. It may be invalid or no longer exist.',
+          description: 'Certificate number out of range.',
           variant: 'destructive',
         });
         setResult({ isValid: false });
         return;
       }
 
+      // Get the specific result (certNumber is 1-based index)
+      const data = allResults[certNumber - 1];
+
+      // Calculate percentage
       const score = data.score || 0;
       const totalQuestions = quizQuestions.length;
       const percentage = Math.round((score / totalQuestions) * 100);
 
+      // Only valid if the score is >= 50%
       if (percentage < 50) {
         toast({
           title: 'Invalid Certificate',
@@ -99,17 +92,14 @@ const VerifyCertificate = () => {
         return;
       }
 
+      // Valid certificate
       setResult({
         isValid: true,
         name: data.name,
         email: data.email,
-        score,
-        percentage,
-        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown',
-        register_number: data.register_number,
-        class: data.class,
-        correct_answers: data.correct_answers,
-        attended_questions: data.attended_questions,
+        score: score,
+        percentage: percentage,
+        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown'
       });
 
       toast({
@@ -117,7 +107,7 @@ const VerifyCertificate = () => {
         description: 'This certificate is valid and authentic.',
       });
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Error in certificate verification:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred during verification. Please try again.',
@@ -144,7 +134,7 @@ const VerifyCertificate = () => {
               Enter the certificate ID to verify its authenticity
             </CardDescription>
           </CardHeader>
-
+          
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="certificate-id" className="block text-sm font-medium">
@@ -171,14 +161,18 @@ const VerifyCertificate = () => {
                       <h3 className="font-medium">Valid Certificate</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-2">
-                      <div><span className="font-medium">Name:</span> {result.name}</div>
-                      {result.register_number && <div><span className="font-medium">Register Number:</span> {result.register_number}</div>}
-                      {result.class && <div><span className="font-medium">Class:</span> {result.class}</div>}
-                      <div><span className="font-medium">Email:</span> {result.email}</div>
-                      <div><span className="font-medium">Score:</span> {result.score} / {quizQuestions.length} ({result.percentage}%)</div>
-                      {result.correct_answers && <div><span className="font-medium">Correct Answers:</span> {result.correct_answers}</div>}
-                      {result.attended_questions && <div><span className="font-medium">Attended Questions:</span> {result.attended_questions}</div>}
-                      <div><span className="font-medium">Issue Date:</span> {result.date}</div>
+                      <div>
+                        <span className="font-medium">Name:</span> {result.name}
+                      </div>
+                      <div>
+                        <span className="font-medium">Email:</span> {result.email}
+                      </div>
+                      <div>
+                        <span className="font-medium">Score:</span> {result.score} / {quizQuestions.length} ({result.percentage}%)
+                      </div>
+                      <div>
+                        <span className="font-medium">Issue Date:</span> {result.date}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -190,11 +184,16 @@ const VerifyCertificate = () => {
               </div>
             )}
           </CardContent>
-
+          
           <CardFooter className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" onClick={() => navigate(-1)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="w-full sm:w-auto"
+            >
               <ArrowLeft size={16} className="mr-2" /> Go Back
             </Button>
+            
             <Button
               onClick={verifyCertificate}
               disabled={loading}
@@ -204,9 +203,13 @@ const VerifyCertificate = () => {
             </Button>
           </CardFooter>
         </Card>
-
+        
         <div className="flex justify-center mt-6">
-          <Button variant="ghost" onClick={() => navigate('/certificate')} className="text-sm">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/certificate')}
+            className="text-sm"
+          >
             Download your certificate
           </Button>
         </div>
