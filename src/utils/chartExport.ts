@@ -169,10 +169,10 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       ctx.fillText(userName, width / 2, 420);
       
       // Add certificate ID using LEMONMILK font, positioned at the bottom
-      ctx.font = 'bold 10px "Shrikhand", Arial';
+      ctx.font = 'bold 16px "Shrikhand", Arial';
       ctx.fillStyle = '#000';
       // Position the certificate ID just above the bottom of the certificate
-      ctx.fillText(`Certificate ID: ${certificateId}   Verify At : https://bound-by-code-quiz.lovable.app/verify-certificate`, width /2, height - 20);
+      ctx.fillText(`Certificate ID: ${certificateId}   Verify Certificate At : https://bound-by-code-quiz.lovable.app/verify-certificate`, width /2, height - 20);
       
       
       // Convert to image and download
