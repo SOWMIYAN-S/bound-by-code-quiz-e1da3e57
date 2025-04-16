@@ -169,10 +169,11 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       ctx.fillText(userName, width / 2, 420);
       
       // Add certificate ID using LEMONMILK font, positioned at the bottom
-      ctx.font = 'bold 24px "LEMON MILK", "Shrikhand", Arial';
+      ctx.font = 'bold 14px "LEMON MILK", "Shrikhand", Arial';
       ctx.fillStyle = '#6b7280';
       // Position the certificate ID just above the bottom of the certificate
-      ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 820);
+      ctx.fillText(`Certificate ID: ${certificateId}`, width - 250, height - 10);
+      
       
       // Convert to image and download
       const dataURL = canvas.toDataURL('image/png');
