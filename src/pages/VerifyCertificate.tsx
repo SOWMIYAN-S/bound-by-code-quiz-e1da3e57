@@ -32,7 +32,7 @@ const VerifyCertificate = () => {
   };
 
   const verifyCertificate = async () => {
-if (!/^BBCCQ00\d{6}$/.test(certificateId)) {
+if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
   toast({
     title: 'Invalid Certificate ID',
     description: 'Please enter a valid certificate ID in the format BBCCQ00######.',
