@@ -34,11 +34,11 @@ const VerifyCertificate = () => {
   };
 
   const verifyCertificate = async () => {
-    // Updated to match new BBCCQ## format (2 digits)
-    if (!/^BBCCQ\d{2}$/.test(certificateId)) {
+    // Maintain BBCCQ20## format (8 characters)
+    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
       toast({
         title: 'Invalid Certificate ID',
-        description: 'Please enter a valid certificate ID in the format BBCCQ##.',
+        description: 'Please enter a valid certificate ID in the format BBCCQ20## (e.g. BBCCQ2001).',
         variant: 'destructive',
       });
       return;
@@ -46,7 +46,7 @@ const VerifyCertificate = () => {
 
     setLoading(true);
     try {
-      // Direct lookup by certificate_id instead of position
+      // Direct lookup by certificate_id column
       const { data, error } = await supabase
         .from('quiz_results')
         .select('*')
@@ -128,7 +128,7 @@ const VerifyCertificate = () => {
               </label>
               <Input
                 id="certificate-id"
-                placeholder="e.g. BBCCQ01"
+                placeholder="e.g. BBCCQ2001"
                 value={certificateId}
                 onChange={handleCertificateIdChange}
                 className="w-full"
