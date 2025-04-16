@@ -1,38 +1,182 @@
-const verifyCertificate = async () => {
-  // ... existing validation ...
+// chartExport.ts
+import { supabase } from '@/integrations/supabase/client';
+import { quizQuestions } from '@/data/questions';
 
-  setLoading(true);
+/**
+ * Gets the registration order for certificate ID generation
+ */
+const getRegistrationOrder = async (userId: string): Promise<number> => {
+  const { data, error } = await supabase
+    .from('quiz_results')
+    .select('id, created_at')
+    .order('created_at', { ascending: true });
+
+  if (error || !data) {
+    console.error('Error fetching registration order:', error);
+    return 0;
+  }
+
+  const userIndex = data.findIndex(item => item.id === userId);
+  return userIndex >= 0 ? userIndex + 1 : 0;
+};
+
+/**
+ * Generate and download a certificate for a user
+ */
+export const generateCertificate = async (
+  userName: string,
+  score: number,
+  userId: string
+) => {
   try {
-    const verification = await verifyCertificate(certificateId);
-    
-    if (!verification.isValid) {
-      toast({
-        title: verification.error || 'Error',
-        description: verification.errorDetails || 'Verification failed',
-        variant: 'destructive',
-      });
-      setResult({ isValid: false });
-      return;
+    const registrationOrder = await getRegistrationOrder(userId);
+    if (registrationOrder === 0) {
+      console.error('User not found in ordered results');
+      return false;
     }
 
-    setResult({
-      isValid: true,
-      name: verification.name,
-      email: verification.email,
-      score: verification.score,
-      percentage: verification.percentage,
-      date: verification.date,
-      registerNumber: verification.registerNumber,
-      studentClass: verification.studentClass
-    });
-
-    toast({
-      title: 'Certificate Verified',
-      description: 'This certificate is valid and authentic.',
+    const orderNumber = registrationOrder.toString().padStart(2, '0');
+    const certificateId = `BBCCQ20${orderNumber}`;
+    
+    const canvas = document.createElement('canvas');
+    const width = 1200;
+    const height = 900;
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get 2D context');
+      return false;
+    }
+    
+    // Preload font
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.cdnfonts.com/css/lemon-milk';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+    
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    
+    return new Promise<boolean>((resolve) => {
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        ctx.font = "bold 48px Shrikhand, Arial";
+        ctx.fillStyle = '#ea384c';
+        ctx.textAlign = 'center';
+        
+        const nameWidth = ctx.measureText(userName).width;
+        const maxWidth = 500;
+        let fontSize = 48;
+        
+        if (nameWidth > maxWidth) {
+          fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
+          ctx.font = `bold ${fontSize}px Shrikhand, Arial`;
+        }
+        
+        ctx.fillText(userName, width / 2, 420);
+        
+        ctx.font = 'bold 16px "Shrikhand", Arial';
+        ctx.fillStyle = '#4f4f4f';
+        ctx.fillText(
+          `Certificate ID: ${certificateId}   Verify At: https://bound-by-code-quiz.lovable.app/verify-certificate`, 
+          width / 2, 
+          height - 20
+        );
+        
+        const dataURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        console.error('Failed to load certificate template');
+        resolve(false);
+      };
+      
+      img.src = 'https://raw.githubusercontent.com/SOWMIYAN-S/certificates/refs/heads/main/CODEQUEST%20S2_20250414_084656_0000.png';
     });
   } catch (error) {
-    // ... error handling ...
-  } finally {
-    setLoading(false);
+    console.error('Failed to generate certificate:', error);
+    return false;
   }
 };
+
+/**
+ * Verify certificate against database records (matches VerifyCertificate.tsx exactly)
+ */
+export const verifyCertificate = async (certificateId: string) => {
+  try {
+    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
+      return { 
+        isValid: false, 
+        error: 'Invalid certificate format',
+        errorDetails: 'Please enter a valid certificate ID in the format BBCCQ20##.'
+      };
+    }
+
+    const certNumber = parseInt(certificateId.substring(7), 10);
+    
+    const { data: allResults, error } = await supabase
+      .from('quiz_results')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      return { 
+        isValid: false, 
+        error: 'Database error',
+        errorDetails: 'Failed to fetch certificate data from database.'
+      };
+    }
+
+    if (!allResults || certNumber < 1 || certNumber > allResults.length) {
+      return { 
+        isValid: false, 
+        error: 'Invalid certificate',
+        errorDetails: 'This certificate could not be verified. It may be invalid or no longer exist.'
+      };
+    }
+
+    const userData = allResults[certNumber - 1];
+    const score = userData.score || 0;
+    const percentage = Math.round((score / quizQuestions.length) * 100);
+
+    if (percentage < 50) {
+      return { 
+        isValid: false, 
+        error: 'Invalid certificate',
+        errorDetails: 'This certificate is not valid as the user did not achieve the minimum passing score.'
+      };
+    }
+
+    return {
+      isValid: true,
+      name: userData.name,
+      email: userData.email,
+      score,
+      percentage,
+      date: userData.created_at ? new Date(userData.created_at).toLocaleDateString() : 'Unknown',
+      registerNumber: userData.register_number,
+      studentClass: userData.class
+    };
+  } catch (error) {
+    console.error('Verification error:', error);
+    return { 
+      isValid: false, 
+      error: 'Verification failed',
+      errorDetails: 'An unexpected error occurred during verification.'
+    };
+  }
+};
+
+// Keep the existing export functions unchanged
+export { exportChartAsImage, exportElementAsImage };
