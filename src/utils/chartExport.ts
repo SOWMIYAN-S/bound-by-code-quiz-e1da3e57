@@ -172,7 +172,7 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       ctx.font = 'bold 14px "LEMON MILK", "Shrikhand", Arial';
       ctx.fillStyle = '#6b7280';
       // Position the certificate ID just above the bottom of the certificate
-      ctx.fillText(`Certificate ID: ${certificateId}`, width - 250, height - 20);
+      ctx.fillText(`Certificate ID: ${certificateId}`, width /2, height - 20);
       
       
       // Convert to image and download
