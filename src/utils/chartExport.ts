@@ -1,40 +1,123 @@
-// chartExport.ts
-import { supabase } from '@/integrations/supabase/client';
-import { quizQuestions } from '@/data/questions';
 
 /**
- * Gets the registration order for certificate ID generation
+ * Utility function to export a chart as an image
  */
-const getRegistrationOrder = async (userId: string): Promise<number> => {
-  const { data, error } = await supabase
-    .from('quiz_results')
-    .select('id, created_at')
-    .order('created_at', { ascending: true });
-
-  if (error || !data) {
-    console.error('Error fetching registration order:', error);
-    return 0;
+export const exportChartAsImage = (chartId: string, filename: string) => {
+  try {
+    const chartElement = document.querySelector(`[data-chart="${chartId}"]`);
+    if (!chartElement) {
+      console.error('Chart element not found');
+      return;
+    }
+    
+    // Use html2canvas to create an image from the chart
+    import('html2canvas').then((html2canvas) => {
+      html2canvas.default(chartElement as HTMLElement, {
+        backgroundColor: null,
+        scale: 3, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      }).then(canvas => {
+        // Create a square canvas (4:4 ratio)
+        const squareCanvas = document.createElement('canvas');
+        const size = Math.max(canvas.width, canvas.height);
+        squareCanvas.width = size;
+        squareCanvas.height = size;
+        
+        const ctx = squareCanvas.getContext('2d');
+        if (!ctx) return;
+        
+        // Fill with white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Center the original canvas on the square canvas
+        const xOffset = Math.max(0, (size - canvas.width) / 2);
+        const yOffset = Math.max(0, (size - canvas.height) / 2);
+        
+        // Draw with proper positioning
+        ctx.drawImage(canvas, xOffset, yOffset);
+        
+        // Convert to image and download
+        const link = document.createElement('a');
+        link.download = `${filename}.png`;
+        link.href = squareCanvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    });
+  } catch (error) {
+    console.error('Failed to export chart:', error);
   }
+};
 
-  const userIndex = data.findIndex(item => item.id === userId);
-  return userIndex >= 0 ? userIndex + 1 : 0;
+/**
+ * Utility function to export any HTML element as an image
+ */
+export const exportElementAsImage = (elementSelector: string, filename: string) => {
+  try {
+    const element = document.querySelector(elementSelector);
+    if (!element) {
+      console.error('Element not found');
+      return;
+    }
+    
+    // Use html2canvas to create an image from the element
+    import('html2canvas').then((html2canvas) => {
+      html2canvas.default(element as HTMLElement, {
+        backgroundColor: 'white',
+        scale: 3, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      }).then(canvas => {
+        // Create a proper aspect ratio for the image
+        const exportCanvas = document.createElement('canvas');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Set canvas size with padding
+        exportCanvas.width = width + 40;
+        exportCanvas.height = height + 40;
+        
+        const ctx = exportCanvas.getContext('2d');
+        if (!ctx) return;
+        
+        // Fill with white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        
+        // Draw with proper positioning (centered with padding)
+        ctx.drawImage(canvas, 20, 20);
+        
+        // Add a caption/title at the bottom
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = 'black';
+        ctx.textAlign = 'center';
+        ctx.fillText(filename, exportCanvas.width / 2, height + 30);
+        
+        // Convert to image and download
+        const link = document.createElement('a');
+        link.download = `${filename}.png`;
+        link.href = exportCanvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    });
+  } catch (error) {
+    console.error('Failed to export element:', error);
+  }
 };
 
 /**
  * Generate and download a certificate for a user
  */
-export const generateCertificate = async (
-  userName: string,
-  score: number,
-  userId: string
-) => {
+export const generateCertificate = (userName: string, score: number, totalQuestions: number, registrationOrder: number) => {
   try {
-    const registrationOrder = await getRegistrationOrder(userId);
-    if (registrationOrder === 0) {
-      console.error('User not found in ordered results');
-      return false;
-    }
-
+    // Format the certificate ID with the correct format: BBCCQ20XX (where XX is the registration order)
     const orderNumber = registrationOrder.toString().padStart(2, '0');
     const certificateId = `BBCCQ20${orderNumber}`;
     
@@ -50,133 +133,64 @@ export const generateCertificate = async (
       return false;
     }
     
-    // Preload font
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.cdnfonts.com/css/lemon-milk';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
+    // Load LEMONMILK font
+    const lemonMilkFontUrl = 'https://fonts.cdnfonts.com/css/lemon-milk';
+    const fontStylesheet = document.createElement('link');
+    fontStylesheet.rel = 'stylesheet';
+    fontStylesheet.href = lemonMilkFontUrl;
+    document.head.appendChild(fontStylesheet);
     
+    // Create a new image object
     const img = new Image();
     img.crossOrigin = "anonymous";
     
-    return new Promise<boolean>((resolve) => {
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        ctx.font = "bold 48px Shrikhand, Arial";
-        ctx.fillStyle = '#ea384c';
-        ctx.textAlign = 'center';
-        
-        const nameWidth = ctx.measureText(userName).width;
-        const maxWidth = 500;
-        let fontSize = 48;
-        
-        if (nameWidth > maxWidth) {
-          fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
-          ctx.font = `bold ${fontSize}px Shrikhand, Arial`;
-        }
-        
-        ctx.fillText(userName, width / 2, 420);
-        
-        ctx.font = 'bold 16px "Shrikhand", Arial';
-        ctx.fillStyle = '#4f4f4f';
-        ctx.fillText(
-          `Certificate ID: ${certificateId}   Verify At: https://bound-by-code-quiz.lovable.app/verify-certificate`, 
-          width / 2, 
-          height - 20
-        );
-        
-        const dataURL = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        resolve(true);
-      };
+    // Set up the image load handler
+    img.onload = () => {
+      // Draw the certificate image
+      ctx.drawImage(img, 0, 0, width, height);
       
-      img.onerror = () => {
-        console.error('Failed to load certificate template');
-        resolve(false);
-      };
+      // Add participant name using Shrikhand font
+      ctx.font = "bold 48px Shrikhand, Arial";
+      ctx.fillStyle = '#ea384c';
+      ctx.textAlign = 'center';
       
-      img.src = 'https://raw.githubusercontent.com/SOWMIYAN-S/certificates/refs/heads/main/CODEQUEST%20S2_20250414_084656_0000.png';
-    });
+      // Calculate text width to ensure it fits
+      const nameWidth = ctx.measureText(userName).width;
+      const maxWidth = 500;
+      let fontSize = 48;
+      
+      // Adjust font size if name is too long
+      if (nameWidth > maxWidth) {
+        fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
+        ctx.font = `bold ${fontSize}px Shrikhand, Arial`;
+      }
+      
+      // Position the name higher up (above the line)
+      ctx.fillText(userName, width / 2, 420);
+      
+      // Add certificate ID using LEMONMILK font, positioned at the bottom
+      ctx.font = 'bold 16px "Shrikhand", Arial';
+      ctx.fillStyle = '#4f4f4f';
+      // Position the certificate ID just above the bottom of the certificate
+      ctx.fillText(`Certificate ID: ${certificateId}   Verify At : https://bound-by-code-quiz.lovable.app/verify-certificate`, width /2, height - 20);
+      
+      
+      // Convert to image and download
+      const dataURL = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+    
+    // Set the image source - this will trigger the load event
+    img.src = 'https://raw.githubusercontent.com/SOWMIYAN-S/certificates/refs/heads/main/CODEQUEST%20S2_20250414_084656_0000.png';
+    
+    return true;
   } catch (error) {
     console.error('Failed to generate certificate:', error);
     return false;
   }
 };
-
-/**
- * Verify certificate against database records
- */
-export const verifyCertificate = async (certificateId: string) => {
-  try {
-    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
-      return { 
-        isValid: false, 
-        error: 'Invalid certificate format',
-        errorDetails: 'Please enter a valid certificate ID in the format BBCCQ20##.'
-      };
-    }
-
-    const certNumber = parseInt(certificateId.substring(7), 10);
-    
-    const { data: allResults, error } = await supabase
-      .from('quiz_results')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      return { 
-        isValid: false, 
-        error: 'Database error',
-        errorDetails: 'Failed to fetch certificate data from database.'
-      };
-    }
-
-    if (!allResults || certNumber < 1 || certNumber > allResults.length) {
-      return { 
-        isValid: false, 
-        error: 'Invalid certificate',
-        errorDetails: 'This certificate could not be verified. It may be invalid or no longer exist.'
-      };
-    }
-
-    const userData = allResults[certNumber - 1];
-    const score = userData.score || 0;
-    const percentage = Math.round((score / quizQuestions.length) * 100);
-
-    if (percentage < 50) {
-      return { 
-        isValid: false, 
-        error: 'Invalid certificate',
-        errorDetails: 'This certificate is not valid as the user did not achieve the minimum passing score.'
-      };
-    }
-
-    return {
-      isValid: true,
-      name: userData.name,
-      email: userData.email,
-      score,
-      percentage,
-      date: userData.created_at ? new Date(userData.created_at).toLocaleDateString() : 'Unknown',
-      registerNumber: userData.register_number,
-      studentClass: userData.class
-    };
-  } catch (error) {
-    console.error('Verification error:', error);
-    return { 
-      isValid: false, 
-      error: 'Verification failed',
-      errorDetails: 'An unexpected error occurred during verification.'
-    };
-  }
-};
-
-// Keep the existing export functions unchanged
-export { exportChartAsImage, exportElementAsImage };
