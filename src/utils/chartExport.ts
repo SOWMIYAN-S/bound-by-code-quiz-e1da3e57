@@ -107,7 +107,7 @@ export const generateCertificate = async (
 ) => {
   try {
     // Check for existing certificate
-    const { data: existingData } = await supabase
+    const { data: existingData, error: fetchError } = await supabase
       .from('quiz_results')
       .select('certificate_id')
       .eq('user_id', userId)
@@ -116,27 +116,34 @@ export const generateCertificate = async (
     let certificateId: string;
 
     if (existingData?.certificate_id) {
+      // Use existing certificate ID
       certificateId = existingData.certificate_id;
     } else {
-      // Get next certificate number
-      const { data: maxCertData } = await supabase
+      // Get the highest existing certificate number
+      const { data: maxCertData, error: maxError } = await supabase
         .from('quiz_results')
         .select('certificate_id')
         .not('certificate_id', 'is', null)
         .order('certificate_id', { ascending: false })
         .limit(1);
 
-      const nextNumber = maxCertData?.length
-        ? parseInt(maxCertData[0].certificate_id?.replace('BBCCQ', '') || '0') + 1
-        : 1;
+      if (maxError) throw maxError;
 
-      certificateId = `BBCCQ${nextNumber.toString().padStart(2, '0')}`;
+      // Calculate next certificate number (extract last 2 digits)
+      const lastNumber = maxCertData?.length 
+        ? parseInt(maxCertData[0].certificate_id?.substring(7) || 0)
+        : 0;
+      
+      const nextNumber = lastNumber + 1;
+      certificateId = `BBCCQ20${nextNumber.toString().padStart(2, '0')}`;
 
-      // Update record with certificate ID
-      await supabase
+      // Update the record with the new certificate ID
+      const { error: updateError } = await supabase
         .from('quiz_results')
         .update({ certificate_id: certificateId })
         .eq('user_id', userId);
+
+      if (updateError) throw updateError;
     }
 
     // Generate certificate image
@@ -152,6 +159,7 @@ export const generateCertificate = async (
       return false;
     }
     
+    // Preload font
     const fontLink = document.createElement('link');
     fontLink.href = 'https://fonts.cdnfonts.com/css/lemon-milk';
     fontLink.rel = 'stylesheet';
@@ -217,31 +225,43 @@ export const generateCertificate = async (
  */
 export const verifyCertificate = async (certificateId: string) => {
   try {
-    if (!/^BBCCQ\d{2}$/.test(certificateId)) {
+    // Validate certificate format (BBCCQ20 followed by 2 digits)
+    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
       return { 
         isValid: false, 
         error: 'Invalid certificate format',
-        errorDetails: 'Please enter a valid certificate ID in the format BBCCQ##.'
+        errorDetails: 'Please enter a valid certificate ID in the format BBCCQ20##.'
       };
     }
 
+    // Direct database lookup by certificate_id
     const { data: resultData, error } = await supabase
       .from('quiz_results')
       .select('*')
       .eq('certificate_id', certificateId)
       .single();
 
-    if (error || !resultData) {
+    if (error) {
       return { 
         isValid: false, 
-        error: 'Certificate not found',
-        errorDetails: 'This certificate ID does not exist in our records.'
+        error: 'Database error',
+        errorDetails: 'Failed to fetch certificate data from database.'
       };
     }
 
+    if (!resultData) {
+      return { 
+        isValid: false, 
+        error: 'Invalid certificate',
+        errorDetails: 'This certificate could not be found in our records.'
+      };
+    }
+
+    // Calculate percentage score
     const score = resultData.score || 0;
     const percentage = Math.round((score / quizQuestions.length) * 100);
 
+    // Check passing score (50% or higher)
     if (percentage < 50) {
       return { 
         isValid: false, 
@@ -250,6 +270,7 @@ export const verifyCertificate = async (certificateId: string) => {
       };
     }
 
+    // Valid certificate
     return {
       isValid: true,
       name: resultData.name,
