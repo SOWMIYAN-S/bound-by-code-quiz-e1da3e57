@@ -116,31 +116,40 @@ export const generateCertificate = async (
     let certificateId: string;
 
     if (existingData?.certificate_id) {
-      // Use existing certificate ID
       certificateId = existingData.certificate_id;
     } else {
-      // Get the highest existing certificate number
-      const { data: maxCertData, error: maxError } = await supabase
+      // Get ALL existing certificates to properly sequence numbers
+      const { data: allCertificates, error: fetchCertsError } = await supabase
         .from('quiz_results')
-        .select('certificate_id')
+        .select('certificate_id,created_at')
         .not('certificate_id', 'is', null)
-        .order('certificate_id', { ascending: false })
-        .limit(1);
+        .order('created_at', { ascending: true });
 
-      if (maxError) throw maxError;
+      if (fetchCertsError) throw fetchCertsError;
 
-      // Calculate next certificate number (extract last 2 digits)
-      const lastNumber = maxCertData?.length 
-        ? parseInt(maxCertData[0].certificate_id?.substring(7) || 0)
-        : 0;
-      
-      const nextNumber = lastNumber + 1;
+      let nextNumber = 1;
+      if (allCertificates && allCertificates.length > 0) {
+        // Find the highest existing certificate number
+        const numbers = allCertificates.map(cert => {
+          const id = cert.certificate_id;
+          if (!id || !id.startsWith('BBCCQ20')) return 0;
+          const numPart = id.substring(7); // Get the last 2 digits
+          return parseInt(numPart) || 0;
+        }).filter(n => n > 0);
+
+        nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+      }
+
       certificateId = `BBCCQ20${nextNumber.toString().padStart(2, '0')}`;
 
       // Update the record with the new certificate ID
       const { error: updateError } = await supabase
         .from('quiz_results')
-        .update({ certificate_id: certificateId })
+        .update({ 
+          certificate_id: certificateId,
+          completed: true,
+          score: score
+        })
         .eq('user_id', userId);
 
       if (updateError) throw updateError;
