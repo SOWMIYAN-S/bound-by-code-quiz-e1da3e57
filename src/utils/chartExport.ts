@@ -116,7 +116,6 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
  */
 export const generateCertificate = (userName: string, score: number, totalQuestions: number, certificateId: string) => {
   try {
-    // Create a certificate using canvas directly
     const canvas = document.createElement('canvas');
     const width = 1200;
     const height = 900;
@@ -126,36 +125,34 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       console.error('Could not get 2D context');
-      return;
+      return false;
     }
     
     // Fill background with white first
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
     
-    // Create a simple certificate without depending on external image
-    // Draw border
-    ctx.strokeStyle = '#8b5cf6'; // Violet color matching theme
+    // Draw outer border
+    ctx.strokeStyle = '#8b5cf6';
     ctx.lineWidth = 15;
     ctx.strokeRect(50, 50, width - 100, height - 100);
     
     // Draw inner border
-    ctx.strokeStyle = '#a78bfa'; // Lighter violet
+    ctx.strokeStyle = '#a78bfa';
     ctx.lineWidth = 5;
     ctx.strokeRect(80, 80, width - 160, height - 160);
     
-    // Add certificate title
-    ctx.font = 'bold 60px Arial';
-    ctx.fillStyle = '#7c3aed'; // Deep violet
+    // Add certificate title - using Shrikhand font
+    ctx.font = 'bold 60px Shrikhand, Arial';
+    ctx.fillStyle = '#7c3aed';
     ctx.textAlign = 'center';
     ctx.fillText('Certificate of Completion', width / 2, 200);
     
     // Add subtitle
     ctx.font = 'bold 30px Arial';
-    ctx.fillStyle = '#4c1d95'; // Dark violet
+    ctx.fillStyle = '#4c1d95';
     ctx.fillText('Brain Based Quiz Challenge', width / 2, 260);
     
-    // Add "This is to certify that" text
     ctx.font = '24px Arial';
     ctx.fillStyle = '#1f2937';
     ctx.fillText('This is to certify that', width / 2, 350);
@@ -168,10 +165,22 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
     ctx.lineTo(width / 2 + 250, 460);
     ctx.stroke();
     
-    // Add participant name centered on the dotted line
-    ctx.font = "48px Arial";
-    ctx.fillStyle = '#ea384c'; // Red color
+    // Add participant name using Shrikhand font
+    ctx.font = "48px Shrikhand, Arial";
+    ctx.fillStyle = '#ea384c';
     ctx.textAlign = 'center';
+    
+    // Calculate text width to ensure it fits
+    const nameWidth = ctx.measureText(userName).width;
+    const maxWidth = 500; // Maximum width for name
+    let fontSize = 48;
+    
+    // Adjust font size if name is too long
+    if (nameWidth > maxWidth) {
+      fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
+      ctx.font = `${fontSize}px Shrikhand, Arial`;
+    }
+    
     ctx.fillText(userName, width / 2, 450);
     
     // Add completion text
@@ -192,8 +201,8 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
     ctx.fillStyle = '#1f2937';
     ctx.fillText(`Date: ${formattedDate}`, width / 2, 650);
     
-    // Add certificate ID
-    ctx.font = '16px Arial';
+    // Add certificate ID using Shrikhand font
+    ctx.font = '24px Shrikhand, Arial';
     ctx.fillStyle = '#6b7280';
     ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 720);
     
