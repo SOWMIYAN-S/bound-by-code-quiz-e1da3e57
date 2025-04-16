@@ -111,7 +111,7 @@ export const generateCertificate = async (
 };
 
 /**
- * Verify certificate against database records (matches VerifyCertificate.tsx exactly)
+ * Verify certificate against database records
  */
 export const verifyCertificate = async (certificateId: string) => {
   try {
