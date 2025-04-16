@@ -23,6 +23,10 @@ interface VerificationResult {
   score?: number;
   percentage?: number;
   date?: string;
+  register_number?: string;
+  class?: string;
+  correct_answers?: number;
+  attended_questions?: number;
 }
 
 const VerifyCertificate = () => {
@@ -49,7 +53,9 @@ const VerifyCertificate = () => {
 
     setLoading(true);
     try {
-      const userId = certificateId.substring(7);
+      const certPrefix = certificateId.substring(0, 7); // 'BBCCQ20'
+      const certIdPart = certificateId.substring(7);    // '01'
+      const userId = parseInt(certIdPart);              // convert '01' to 1
 
       const { data, error } = await supabase
         .from('quiz_results')
@@ -58,32 +64,18 @@ const VerifyCertificate = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error verifying certificate:', error);
-
-        if (
-          error.code === '18' ||
-          error.code === '42501' ||
-          error.message.includes('permission') ||
-          error.message.includes('denied')
-        ) {
-          toast({
-            title: 'Access Restricted',
-            description:
-              'Unable to verify certificate due to permission restrictions. Please try logging in first.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Error',
-            description: 'Failed to verify certificate. Please try again.',
-            variant: 'destructive',
-          });
-        }
+        console.error('Supabase error:', error.message);
+        toast({
+          title: 'Error',
+          description: 'Verification failed due to database error',
+          variant: 'destructive',
+        });
         setResult(null);
         return;
       }
 
       if (!data) {
+        console.log('No data found for ID:', userId);
         toast({
           title: 'Invalid Certificate',
           description: 'This certificate could not be verified. It may be invalid or no longer exist.',
@@ -114,6 +106,10 @@ const VerifyCertificate = () => {
         score,
         percentage,
         date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown',
+        register_number: data.register_number,
+        class: data.class,
+        correct_answers: data.correct_answers,
+        attended_questions: data.attended_questions,
       });
 
       toast({
@@ -176,8 +172,12 @@ const VerifyCertificate = () => {
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-2">
                       <div><span className="font-medium">Name:</span> {result.name}</div>
+                      {result.register_number && <div><span className="font-medium">Register Number:</span> {result.register_number}</div>}
+                      {result.class && <div><span className="font-medium">Class:</span> {result.class}</div>}
                       <div><span className="font-medium">Email:</span> {result.email}</div>
                       <div><span className="font-medium">Score:</span> {result.score} / {quizQuestions.length} ({result.percentage}%)</div>
+                      {result.correct_answers && <div><span className="font-medium">Correct Answers:</span> {result.correct_answers}</div>}
+                      {result.attended_questions && <div><span className="font-medium">Attended Questions:</span> {result.attended_questions}</div>}
                       <div><span className="font-medium">Issue Date:</span> {result.date}</div>
                     </div>
                   </div>
