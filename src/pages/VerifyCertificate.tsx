@@ -16,6 +16,8 @@ interface VerificationResult {
   score?: number;
   percentage?: number;
   date?: string;
+  registerNumber?: string;
+  studentClass?: string;
 }
 
 const VerifyCertificate = () => {
@@ -42,10 +44,8 @@ const VerifyCertificate = () => {
 
     setLoading(true);
     try {
-      // Extract the numeric part from certificate ID (e.g., "01" from "BBCCQ2001")
       const certNumber = parseInt(certificateId.substring(7), 10);
       
-      // Get all results ordered by created_at to match certificate numbers
       const { data: allResults, error } = await supabase
         .from('quiz_results')
         .select('*')
@@ -62,7 +62,6 @@ const VerifyCertificate = () => {
         return;
       }
 
-      // Check if the certificate number is valid
       if (!allResults || certNumber < 1 || certNumber > allResults.length) {
         toast({
           title: 'Invalid Certificate',
@@ -73,15 +72,10 @@ const VerifyCertificate = () => {
         return;
       }
 
-      // Get the specific result (certNumber is 1-based index)
       const data = allResults[certNumber - 1];
-
-      // Calculate percentage
       const score = data.score || 0;
-      const totalQuestions = quizQuestions.length;
-      const percentage = Math.round((score / totalQuestions) * 100);
+      const percentage = Math.round((score / quizQuestions.length) * 100);
 
-      // Only valid if the score is >= 50%
       if (percentage < 50) {
         toast({
           title: 'Invalid Certificate',
@@ -92,14 +86,15 @@ const VerifyCertificate = () => {
         return;
       }
 
-      // Valid certificate
       setResult({
         isValid: true,
         name: data.name,
         email: data.email,
         score: score,
         percentage: percentage,
-        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown'
+        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown',
+        registerNumber: data.register_number,
+        studentClass: data.class
       });
 
       toast({
@@ -173,6 +168,16 @@ const VerifyCertificate = () => {
                       <div>
                         <span className="font-medium">Issue Date:</span> {result.date}
                       </div>
+                      {result.registerNumber && (
+                        <div>
+                          <span className="font-medium">Register Number:</span> {result.registerNumber}
+                        </div>
+                      )}
+                      {result.studentClass && (
+                        <div>
+                          <span className="font-medium">Class:</span> {result.studentClass}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
