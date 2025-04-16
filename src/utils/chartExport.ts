@@ -106,8 +106,8 @@ export const generateCertificate = async (
   userId: string
 ) => {
   try {
-    // Check for existing certificate
-    const { data: existingData, error: fetchError } = await supabase
+    // First ensure the quiz result exists with certificate_id
+    const { data: quizResult, error: fetchError } = await supabase
       .from('quiz_results')
       .select('certificate_id')
       .eq('user_id', userId)
@@ -115,44 +115,45 @@ export const generateCertificate = async (
 
     let certificateId: string;
 
-    if (existingData?.certificate_id) {
-      certificateId = existingData.certificate_id;
-    } else {
-      // Get ALL existing certificates to properly sequence numbers
-      const { data: allCertificates, error: fetchCertsError } = await supabase
+    if (fetchError || !quizResult) {
+      // Create new quiz result - the database trigger will generate the ID
+      const { data: newResult, error: createError } = await supabase
         .from('quiz_results')
-        .select('certificate_id,created_at')
-        .not('certificate_id', 'is', null)
-        .order('created_at', { ascending: true });
-
-      if (fetchCertsError) throw fetchCertsError;
-
-      let nextNumber = 1;
-      if (allCertificates && allCertificates.length > 0) {
-        // Find the highest existing certificate number
-        const numbers = allCertificates.map(cert => {
-          const id = cert.certificate_id;
-          if (!id || !id.startsWith('BBCCQ20')) return 0;
-          const numPart = id.substring(7); // Get the last 2 digits
-          return parseInt(numPart) || 0;
-        }).filter(n => n > 0);
-
-        nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
-      }
-
-      certificateId = `BBCCQ20${nextNumber.toString().padStart(2, '0')}`;
-
-      // Update the record with the new certificate ID
-      const { error: updateError } = await supabase
-        .from('quiz_results')
-        .update({ 
-          certificate_id: certificateId,
+        .upsert({
+          user_id: userId,
+          name: userName,
+          score: score,
           completed: true,
-          score: score
+          certificate_id: null // Let database trigger handle this
         })
-        .eq('user_id', userId);
+        .select('certificate_id')
+        .single();
 
-      if (updateError) throw updateError;
+      if (createError || !newResult?.certificate_id) {
+        throw createError || new Error('Certificate ID not generated');
+      }
+      certificateId = newResult.certificate_id;
+    } else {
+      if (!quizResult.certificate_id) {
+        // Update existing record to trigger ID generation
+        const { data: updatedResult, error: updateError } = await supabase
+          .from('quiz_results')
+          .update({ 
+            completed: true,
+            score: score,
+            certificate_id: null // Reset to let trigger generate
+          })
+          .eq('user_id', userId)
+          .select('certificate_id')
+          .single();
+
+        if (updateError || !updatedResult?.certificate_id) {
+          throw updateError || new Error('Certificate ID generation failed');
+        }
+        certificateId = updatedResult.certificate_id;
+      } else {
+        certificateId = quizResult.certificate_id;
+      }
     }
 
     // Generate certificate image
