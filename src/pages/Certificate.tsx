@@ -102,7 +102,7 @@ const Certificate = () => {
       if (!data) {
         toast({
           title: 'User Not Found',
-          description: 'No records found for this email address. Please register and complete the quiz first.',
+          description: 'No records found for this email address. Please register and complete the quiz first :(',
           variant: 'destructive',
         });
         setLoading(false);
