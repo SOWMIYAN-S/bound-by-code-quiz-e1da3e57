@@ -1,9 +1,8 @@
-// chartExport.ts
 import { supabase } from '@/integrations/supabase/client';
 import { quizQuestions } from '@/data/questions';
 
 /**
- * Utility function to export a chart as an image
+ * Export a chart as PNG image
  */
 export const exportChartAsImage = (chartId: string, filename: string) => {
   try {
@@ -12,30 +11,29 @@ export const exportChartAsImage = (chartId: string, filename: string) => {
       console.error('Chart element not found');
       return;
     }
-    
+
     import('html2canvas').then((html2canvas) => {
       html2canvas.default(chartElement as HTMLElement, {
         backgroundColor: null,
         scale: 3,
-        logging: false,
         useCORS: true,
         allowTaint: true,
-      }).then(canvas => {
+      }).then((canvas) => {
         const squareCanvas = document.createElement('canvas');
         const size = Math.max(canvas.width, canvas.height);
         squareCanvas.width = size;
         squareCanvas.height = size;
-        
+
         const ctx = squareCanvas.getContext('2d');
         if (!ctx) return;
-        
+
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, size, size);
-        
-        const xOffset = Math.max(0, (size - canvas.width) / 2);
-        const yOffset = Math.max(0, (size - canvas.height) / 2);
+
+        const xOffset = (size - canvas.width) / 2;
+        const yOffset = (size - canvas.height) / 2;
         ctx.drawImage(canvas, xOffset, yOffset);
-        
+
         const link = document.createElement('a');
         link.download = `${filename}.png`;
         link.href = squareCanvas.toDataURL('image/png');
@@ -50,7 +48,7 @@ export const exportChartAsImage = (chartId: string, filename: string) => {
 };
 
 /**
- * Utility function to export any HTML element as an image
+ * Export any HTML element as PNG image
  */
 export const exportElementAsImage = (elementSelector: string, filename: string) => {
   try {
@@ -59,31 +57,30 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
       console.error('Element not found');
       return;
     }
-    
+
     import('html2canvas').then((html2canvas) => {
       html2canvas.default(element as HTMLElement, {
         backgroundColor: 'white',
         scale: 3,
-        logging: false,
         useCORS: true,
         allowTaint: true,
-      }).then(canvas => {
+      }).then((canvas) => {
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = canvas.width + 40;
         exportCanvas.height = canvas.height + 40;
-        
+
         const ctx = exportCanvas.getContext('2d');
         if (!ctx) return;
-        
+
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         ctx.drawImage(canvas, 20, 20);
-        
+
         ctx.font = 'bold 16px Arial';
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
         ctx.fillText(filename, exportCanvas.width / 2, canvas.height + 30);
-        
+
         const link = document.createElement('a');
         link.download = `${filename}.png`;
         link.href = exportCanvas.toDataURL('image/png');
@@ -98,15 +95,14 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
 };
 
 /**
- * Generate and download a certificate for a user
+ * Generate downloadable certificate
  */
 export const generateCertificate = async (
   userName: string,
   score: number,
   userId: string
-) => {
+): Promise<boolean> => {
   try {
-    // First ensure the quiz result exists with certificate_id
     const { data: quizResult, error: fetchError } = await supabase
       .from('quiz_results')
       .select('certificate_id')
@@ -116,7 +112,6 @@ export const generateCertificate = async (
     let certificateId: string;
 
     if (fetchError || !quizResult) {
-      // Create new quiz result - the database trigger will generate the ID
       const { data: newResult, error: createError } = await supabase
         .from('quiz_results')
         .upsert({
@@ -124,7 +119,7 @@ export const generateCertificate = async (
           name: userName,
           score: score,
           completed: true,
-          certificate_id: null // Let database trigger handle this
+          certificate_id: null,
         })
         .select('certificate_id')
         .single();
@@ -132,16 +127,16 @@ export const generateCertificate = async (
       if (createError || !newResult?.certificate_id) {
         throw createError || new Error('Certificate ID not generated');
       }
+
       certificateId = newResult.certificate_id;
     } else {
       if (!quizResult.certificate_id) {
-        // Update existing record to trigger ID generation
         const { data: updatedResult, error: updateError } = await supabase
           .from('quiz_results')
-          .update({ 
+          .update({
             completed: true,
             score: score,
-            certificate_id: null // Reset to let trigger generate
+            certificate_id: null,
           })
           .eq('user_id', userId)
           .select('certificate_id')
@@ -150,154 +145,138 @@ export const generateCertificate = async (
         if (updateError || !updatedResult?.certificate_id) {
           throw updateError || new Error('Certificate ID generation failed');
         }
+
         certificateId = updatedResult.certificate_id;
       } else {
         certificateId = quizResult.certificate_id;
       }
     }
 
-    // Generate certificate image
     const canvas = document.createElement('canvas');
     const width = 1200;
     const height = 900;
     canvas.width = width;
     canvas.height = height;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      console.error('Could not get 2D context');
+      console.error('2D context not available');
       return false;
     }
-    
-    // Preload font
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.cdnfonts.com/css/lemon-milk';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
-    
+
     const img = new Image();
-    img.crossOrigin = "anonymous";
-    
-    return new Promise<boolean>((resolve) => {
-      img.onload = () => {
+    img.crossOrigin = 'anonymous';
+    img.src =
+      'https://raw.githubusercontent.com/SOWMIYAN-S/certificates/refs/heads/main/CODEQUEST%20S2_20250414_084656_0000.png';
+
+    return new Promise((resolve) => {
+      img.onload = async () => {
         ctx.drawImage(img, 0, 0, width, height);
-        
-        ctx.font = "bold 48px Shrikhand, Arial";
+
+        // Font setup (fallback-safe)
+        const fontFace = new FontFace('Shrikhand', 'url(https://fonts.gstatic.com/s/shrikhand/v14/a8IbNovtLWfR7T7bMJwrGg.woff2)');
+        await fontFace.load();
+        document.fonts.add(fontFace);
+
+        await new Promise(res => setTimeout(res, 100)); // give time for font render
+
+        ctx.font = 'bold 48px "Shrikhand", Arial';
         ctx.fillStyle = '#ea384c';
         ctx.textAlign = 'center';
-        
-        const nameWidth = ctx.measureText(userName).width;
-        const maxWidth = 500;
+
         let fontSize = 48;
-        
-        if (nameWidth > maxWidth) {
-          fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
-          ctx.font = `bold ${fontSize}px Shrikhand, Arial`;
+        const nameWidth = ctx.measureText(userName).width;
+        if (nameWidth > 500) {
+          fontSize = Math.floor((500 * fontSize) / nameWidth);
+          ctx.font = `bold ${fontSize}px "Shrikhand", Arial`;
         }
-        
+
         ctx.fillText(userName, width / 2, 420);
-        
-        ctx.font = 'bold 16px "Shrikhand", Arial';
+
+        ctx.font = 'bold 16px Arial';
         ctx.fillStyle = '#4f4f4f';
         ctx.fillText(
-          `Certificate ID: ${certificateId}   Verify At: https://bound-by-code-quiz.lovable.app/verify-certificate`, 
-          width / 2, 
+          `Certificate ID: ${certificateId}   Verify At: https://bound-by-code-quiz.lovable.app/verify-certificate`,
+          width / 2,
           height - 20
         );
-        
-        const dataURL = canvas.toDataURL('image/png');
+
         const link = document.createElement('a');
-        link.href = dataURL;
+        link.href = canvas.toDataURL('image/png');
         link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         resolve(true);
       };
-      
+
       img.onerror = () => {
-        console.error('Failed to load certificate template');
+        console.error('Certificate template image load failed.');
         resolve(false);
       };
-      
-      img.src = 'https://raw.githubusercontent.com/SOWMIYAN-S/certificates/refs/heads/main/CODEQUEST%20S2_20250414_084656_0000.png';
     });
-
-  } catch (error) {
-    console.error('Failed to generate certificate:', error);
+  } catch (err) {
+    console.error('Certificate generation error:', err);
     return false;
   }
 };
 
 /**
- * Verify certificate against database records
+ * Certificate verification from database
  */
 export const verifyCertificate = async (certificateId: string) => {
   try {
-    // Validate certificate format (BBCCQ20 followed by 2 digits)
     if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
-      return { 
-        isValid: false, 
-        error: 'Invalid certificate format',
-        errorDetails: 'Please enter a valid certificate ID in the format BBCCQ20##.'
+      return {
+        isValid: false,
+        error: 'Invalid format',
+        errorDetails: 'Format should be BBCCQ20##',
       };
     }
 
-    // Direct database lookup by certificate_id
     const { data: resultData, error } = await supabase
       .from('quiz_results')
       .select('*')
       .eq('certificate_id', certificateId)
       .single();
 
-    if (error) {
-      return { 
-        isValid: false, 
-        error: 'Database error',
-        errorDetails: 'Failed to fetch certificate data from database.'
-      };
-    }
-
-    if (!resultData) {
-      return { 
-        isValid: false, 
+    if (error || !resultData) {
+      return {
+        isValid: false,
         error: 'Invalid certificate',
-        errorDetails: 'This certificate could not be found in our records.'
+        errorDetails: 'Certificate not found.',
       };
     }
 
-    // Calculate percentage score
-    const score = resultData.score || 0;
-    const percentage = Math.round((score / quizQuestions.length) * 100);
-
-    // Check passing score (50% or higher)
+    const percentage = Math.round((resultData.score / quizQuestions.length) * 100);
     if (percentage < 50) {
-      return { 
-        isValid: false, 
-        error: 'Invalid certificate',
-        errorDetails: 'This certificate is not valid as the user did not achieve the minimum passing score.'
+      return {
+        isValid: false,
+        error: 'Failed attempt',
+        errorDetails: 'Score below passing threshold.',
       };
     }
 
-    // Valid certificate
     return {
       isValid: true,
       name: resultData.name,
       email: resultData.email,
-      score,
+      score: resultData.score,
       percentage,
-      date: resultData.created_at ? new Date(resultData.created_at).toLocaleDateString() : 'Unknown',
+      date: resultData.created_at
+        ? new Date(resultData.created_at).toLocaleDateString()
+        : 'Unknown',
       registerNumber: resultData.register_number,
       studentClass: resultData.class,
-      certificateId: resultData.certificate_id
+      certificateId: resultData.certificate_id,
     };
-  } catch (error) {
-    console.error('Verification error:', error);
-    return { 
-      isValid: false, 
-      error: 'Verification failed',
-      errorDetails: 'An unexpected error occurred during verification.'
+  } catch (err) {
+    console.error('Verification error:', err);
+    return {
+      isValid: false,
+      error: 'Error',
+      errorDetails: 'Something went wrong.',
     };
   }
 };
