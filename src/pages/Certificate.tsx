@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ const Certificate = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { user } = useUser();
+  const allUsers = []; // Assuming allUsers is defined somewhere in your application
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -143,13 +143,13 @@ const Certificate = () => {
       description: 'Your certificate is being prepared, please wait...',
     });
     
-    // Certificate ID from user ID
-    const certificateId = `BBCCQ00${userId.substring(0, 6)}`;
+    // Extract registration order from all users
+    const userIndex = allUsers.findIndex(u => u.id === userId) + 1;
     
     // Add slight delay to ensure UI updates properly before generating certificate
     setTimeout(() => {
       try {
-        const success = generateCertificate(name, score, totalQuestions, certificateId);
+        const success = generateCertificate(name, score, totalQuestions, userIndex);
         
         if (success !== false) {
           toast({

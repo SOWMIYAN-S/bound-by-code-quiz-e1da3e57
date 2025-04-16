@@ -114,8 +114,9 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
 /**
  * Generate and download a certificate for a user
  */
-export const generateCertificate = (userName: string, score: number, totalQuestions: number, certificateId: string) => {
+export const generateCertificate = (userName: string, score: number, totalQuestions: number, registrationOrder: number) => {
   try {
+    const certificateId = `BBCCQ200${registrationOrder}`;
     const canvas = document.createElement('canvas');
     const width = 1200;
     const height = 900;
@@ -128,98 +129,51 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       return false;
     }
     
-    // Fill background with white first
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, width, height);
+    // Create a new image object
+    const img = new Image();
+    img.crossOrigin = "anonymous";
     
-    // Draw outer border
-    ctx.strokeStyle = '#8b5cf6';
-    ctx.lineWidth = 15;
-    ctx.strokeRect(50, 50, width - 100, height - 100);
+    // Set up the image load handler
+    img.onload = () => {
+      // Draw the certificate image
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Add participant name using Shrikhand font
+      ctx.font = "48px Shrikhand, Arial";
+      ctx.fillStyle = '#ea384c';
+      ctx.textAlign = 'center';
+      
+      // Calculate text width to ensure it fits
+      const nameWidth = ctx.measureText(userName).width;
+      const maxWidth = 500;
+      let fontSize = 48;
+      
+      // Adjust font size if name is too long
+      if (nameWidth > maxWidth) {
+        fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
+        ctx.font = `${fontSize}px Shrikhand, Arial`;
+      }
+      
+      // Position the name in the designated area
+      ctx.fillText(userName, width / 2, 450);
+      
+      // Add certificate ID using Shrikhand font
+      ctx.font = '24px Shrikhand, Arial';
+      ctx.fillStyle = '#6b7280';
+      ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 720);
+      
+      // Convert to image and download
+      const dataURL = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
     
-    // Draw inner border
-    ctx.strokeStyle = '#a78bfa';
-    ctx.lineWidth = 5;
-    ctx.strokeRect(80, 80, width - 160, height - 160);
-    
-    // Add certificate title - using Shrikhand font
-    ctx.font = 'bold 60px Shrikhand, Arial';
-    ctx.fillStyle = '#7c3aed';
-    ctx.textAlign = 'center';
-    ctx.fillText('Certificate of Completion', width / 2, 200);
-    
-    // Add subtitle
-    ctx.font = 'bold 30px Arial';
-    ctx.fillStyle = '#4c1d95';
-    ctx.fillText('Brain Based Quiz Challenge', width / 2, 260);
-    
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#1f2937';
-    ctx.fillText('This is to certify that', width / 2, 350);
-    
-    // Draw line for name
-    ctx.strokeStyle = '#d1d5db';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(width / 2 - 250, 460);
-    ctx.lineTo(width / 2 + 250, 460);
-    ctx.stroke();
-    
-    // Add participant name using Shrikhand font
-    ctx.font = "48px Shrikhand, Arial";
-    ctx.fillStyle = '#ea384c';
-    ctx.textAlign = 'center';
-    
-    // Calculate text width to ensure it fits
-    const nameWidth = ctx.measureText(userName).width;
-    const maxWidth = 500; // Maximum width for name
-    let fontSize = 48;
-    
-    // Adjust font size if name is too long
-    if (nameWidth > maxWidth) {
-      fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
-      ctx.font = `${fontSize}px Shrikhand, Arial`;
-    }
-    
-    ctx.fillText(userName, width / 2, 450);
-    
-    // Add completion text
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#1f2937';
-    ctx.fillText(`has successfully completed the Brain Based Quiz with a score of`, width / 2, 520);
-    
-    // Add score
-    const percentage = Math.round((score / totalQuestions) * 100);
-    ctx.font = 'bold 36px Arial';
-    ctx.fillStyle = '#4c1d95';
-    ctx.fillText(`${score}/${totalQuestions} (${percentage}%)`, width / 2, 580);
-    
-    // Add date
-    const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#1f2937';
-    ctx.fillText(`Date: ${formattedDate}`, width / 2, 650);
-    
-    // Add certificate ID using Shrikhand font
-    ctx.font = '24px Shrikhand, Arial';
-    ctx.fillStyle = '#6b7280';
-    ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 720);
-    
-    // Add watermark text
-    ctx.font = '12px Arial';
-    ctx.fillStyle = '#d1d5db';
-    ctx.fillText('Brain Based Quiz Challenge Certificate - Verify at brainquiz.com/verify', width / 2, 815);
-    
-    // Convert to image and trigger download
-    const dataURL = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Set the image source - this will trigger the load event
+    img.src = 'https://raw.githubusercontent.com/SOWMIYAN-S/certificates/refs/heads/main/CODEQUEST%20S2_20250414_084656_0000.png';
     
     return true;
   } catch (error) {
