@@ -18,6 +18,7 @@ interface VerificationResult {
   date?: string;
   registerNumber?: string;
   studentClass?: string;
+  certificateId?: string;
 }
 
 const VerifyCertificate = () => {
@@ -33,10 +34,11 @@ const VerifyCertificate = () => {
   };
 
   const verifyCertificate = async () => {
-    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
+    // Updated to match new BBCCQ## format (2 digits)
+    if (!/^BBCCQ\d{2}$/.test(certificateId)) {
       toast({
         title: 'Invalid Certificate ID',
-        description: 'Please enter a valid certificate ID in the format BBCCQ20##.',
+        description: 'Please enter a valid certificate ID in the format BBCCQ##.',
         variant: 'destructive',
       });
       return;
@@ -44,35 +46,23 @@ const VerifyCertificate = () => {
 
     setLoading(true);
     try {
-      const certNumber = parseInt(certificateId.substring(7), 10);
-      
-      const { data: allResults, error } = await supabase
+      // Direct lookup by certificate_id instead of position
+      const { data, error } = await supabase
         .from('quiz_results')
         .select('*')
-        .order('created_at', { ascending: true });
+        .eq('certificate_id', certificateId)
+        .single();
 
-      if (error) {
-        console.error('Error fetching results:', error);
+      if (error || !data) {
         toast({
-          title: 'Database Error',
-          description: 'Failed to fetch certificate data.',
-          variant: 'destructive',
-        });
-        setResult(null);
-        return;
-      }
-
-      if (!allResults || certNumber < 1 || certNumber > allResults.length) {
-        toast({
-          title: 'Invalid Certificate',
-          description: 'Certificate number out of range.',
+          title: 'Certificate Not Found',
+          description: 'No certificate found with this ID.',
           variant: 'destructive',
         });
         setResult({ isValid: false });
         return;
       }
 
-      const data = allResults[certNumber - 1];
       const score = data.score || 0;
       const percentage = Math.round((score / quizQuestions.length) * 100);
 
@@ -94,7 +84,8 @@ const VerifyCertificate = () => {
         percentage: percentage,
         date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown',
         registerNumber: data.register_number,
-        studentClass: data.class
+        studentClass: data.class,
+        certificateId: data.certificate_id
       });
 
       toast({
@@ -137,7 +128,7 @@ const VerifyCertificate = () => {
               </label>
               <Input
                 id="certificate-id"
-                placeholder="e.g. BBCCQ2001"
+                placeholder="e.g. BBCCQ01"
                 value={certificateId}
                 onChange={handleCertificateIdChange}
                 className="w-full"
@@ -156,6 +147,9 @@ const VerifyCertificate = () => {
                       <h3 className="font-medium">Valid Certificate</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-2">
+                      <div>
+                        <span className="font-medium">Certificate ID:</span> {result.certificateId}
+                      </div>
                       <div>
                         <span className="font-medium">Name:</span> {result.name}
                       </div>
