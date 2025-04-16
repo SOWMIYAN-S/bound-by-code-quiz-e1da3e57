@@ -32,19 +32,20 @@ const VerifyCertificate = () => {
   };
 
   const verifyCertificate = async () => {
-    if (!certificateId.trim() || !certificateId.startsWith('BBCCQ00')) {
-      toast({
-        title: 'Invalid Certificate ID',
-        description: 'Please enter a valid certificate ID starting with BBCCQ00.',
-        variant: 'destructive',
-      });
-      return;
-    }
+if (!/^BBCCQ00\d{6}$/.test(certificateId)) {
+  toast({
+    title: 'Invalid Certificate ID',
+    description: 'Please enter a valid certificate ID in the format BBCCQ00######.',
+    variant: 'destructive',
+  });
+  return;
+}
+
 
     setLoading(true);
     try {
       // Extract the user ID from the certificate ID
-      const userId = certificateId.substring(7, 13);
+      const userId = certificateId.substring(7);
       
       // Query the database for the user with the ID
       const { data, error } = await supabase
