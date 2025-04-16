@@ -170,7 +170,7 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       
       // Add certificate ID using LEMONMILK font, positioned at the bottom
       ctx.font = 'bold 14px "LEMON MILK", "Shrikhand", Arial';
-      ctx.fillStyle = '#6b7280';
+      ctx.fillStyle = '#000';
       // Position the certificate ID just above the bottom of the certificate
       ctx.fillText(`Certificate ID: ${certificateId}`, width /2, height - 20);
       
