@@ -1,3 +1,4 @@
+
 /**
  * Utility function to export a chart as an image
  */
@@ -116,7 +117,10 @@ export const exportElementAsImage = (elementSelector: string, filename: string) 
  */
 export const generateCertificate = (userName: string, score: number, totalQuestions: number, registrationOrder: number) => {
   try {
-    const certificateId = `BBCCQ200${registrationOrder}`;
+    // Format the certificate ID with the correct format: BBCCQ20XX (where XX is the registration order)
+    const orderNumber = registrationOrder.toString().padStart(2, '0');
+    const certificateId = `BBCCQ20${orderNumber}`;
+    
     const canvas = document.createElement('canvas');
     const width = 1200;
     const height = 900;
@@ -129,6 +133,13 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       return false;
     }
     
+    // Load LEMONMILK font
+    const lemonMilkFontUrl = 'https://fonts.cdnfonts.com/css/lemon-milk';
+    const fontStylesheet = document.createElement('link');
+    fontStylesheet.rel = 'stylesheet';
+    fontStylesheet.href = lemonMilkFontUrl;
+    document.head.appendChild(fontStylesheet);
+    
     // Create a new image object
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -139,7 +150,7 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       ctx.drawImage(img, 0, 0, width, height);
       
       // Add participant name using Shrikhand font
-      ctx.font = "48px Shrikhand, Arial";
+      ctx.font = "bold 48px Shrikhand, Arial";
       ctx.fillStyle = '#ea384c';
       ctx.textAlign = 'center';
       
@@ -151,16 +162,17 @@ export const generateCertificate = (userName: string, score: number, totalQuesti
       // Adjust font size if name is too long
       if (nameWidth > maxWidth) {
         fontSize = Math.floor((maxWidth * fontSize) / nameWidth);
-        ctx.font = `${fontSize}px Shrikhand, Arial`;
+        ctx.font = `bold ${fontSize}px Shrikhand, Arial`;
       }
       
-      // Position the name in the designated area
-      ctx.fillText(userName, width / 2, 450);
+      // Position the name higher up (above the line)
+      ctx.fillText(userName, width / 2, 420);
       
-      // Add certificate ID using Shrikhand font
-      ctx.font = '24px Shrikhand, Arial';
+      // Add certificate ID using LEMONMILK font, positioned at the bottom
+      ctx.font = 'bold 24px "LEMON MILK", "Shrikhand", Arial';
       ctx.fillStyle = '#6b7280';
-      ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 720);
+      // Position the certificate ID just above the bottom of the certificate
+      ctx.fillText(`Certificate ID: ${certificateId}`, width / 2, 820);
       
       // Convert to image and download
       const dataURL = canvas.toDataURL('image/png');

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,8 +18,7 @@ const Certificate = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { user } = useUser();
-  const allUsers = []; // Assuming allUsers is defined somewhere in your application
+  const { user, allUsers } = useUser();
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -62,8 +62,11 @@ const Certificate = () => {
           return;
         }
         
+        // Find user's registration order
+        const userIndex = allUsers.findIndex(u => u.id === user.id) + 1;
+        
         // Generate certificate using data from context
-        generateCertificateForUser(user.name, score, totalQuestions, user.id);
+        generateCertificateForUser(user.name, score, totalQuestions, userIndex || 1);
         return;
       }
 
@@ -122,8 +125,11 @@ const Certificate = () => {
         return;
       }
 
+      // Find user's registration order
+      const userIndex = allUsers.findIndex(u => u.id === data.id) + 1;
+      
       // Generate certificate
-      generateCertificateForUser(data.name, score, totalQuestions, data.id);
+      generateCertificateForUser(data.name, score, totalQuestions, userIndex || 1);
       
     } catch (error) {
       console.error('Error generating certificate:', error);
@@ -137,19 +143,16 @@ const Certificate = () => {
   };
 
   // Helper function to generate and handle certificate creation
-  const generateCertificateForUser = (name: string, score: number, totalQuestions: number, userId: string) => {
+  const generateCertificateForUser = (name: string, score: number, totalQuestions: number, registrationOrder: number) => {
     toast({
       title: 'Generating Certificate',
       description: 'Your certificate is being prepared, please wait...',
     });
     
-    // Extract registration order from all users
-    const userIndex = allUsers.findIndex(u => u.id === userId) + 1;
-    
     // Add slight delay to ensure UI updates properly before generating certificate
     setTimeout(() => {
       try {
-        const success = generateCertificate(name, score, totalQuestions, userIndex);
+        const success = generateCertificate(name, score, totalQuestions, registrationOrder);
         
         if (success !== false) {
           toast({
