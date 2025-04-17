@@ -152,6 +152,17 @@ export const generateCertificate = async (
       }
     }
 
+    // Ensure the certificate_id is saved in the database
+    const { error: saveError } = await supabase
+      .from('quiz_results')
+      .update({ certificate_id: certificateId })
+      .eq('user_id', userId);
+
+    if (saveError) {
+      throw new Error('Failed to save certificate ID');
+    }
+
+    // Generate the certificate as an image
     const canvas = document.createElement('canvas');
     const width = 1200;
     const height = 900;
@@ -178,7 +189,7 @@ export const generateCertificate = async (
         await fontFace.load();
         document.fonts.add(fontFace);
 
-        await new Promise(res => setTimeout(res, 100)); // give time for font render
+        await new Promise((res) => setTimeout(res, 100)); // give time for font render
 
         ctx.font = 'bold 48px "Shrikhand", Arial';
         ctx.fillStyle = '#ea384c';
