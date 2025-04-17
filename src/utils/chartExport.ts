@@ -204,9 +204,13 @@ export const generateCertificate = async (
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
         link.download = `${userName.replace(/\s+/g, '_')}_Certificate.png`;
+
+        // Fallback mechanism for download
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 1000);
 
         resolve(true);
       };
