@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,9 +17,6 @@ interface VerificationResult {
   score?: number;
   percentage?: number;
   date?: string;
-  registerNumber?: string;
-  studentClass?: string;
-  certificateId?: string;
 }
 
 const VerifyCertificate = () => {
@@ -34,58 +32,87 @@ const VerifyCertificate = () => {
   };
 
   const verifyCertificate = async () => {
-    // Maintain BBCCQ20## format (8 characters)
-    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
-      toast({
-        title: 'Invalid Certificate ID',
-        description: 'Please enter a valid certificate ID in the format BBCCQ20## (e.g. BBCCQ2001).',
-        variant: 'destructive',
-      });
-      return;
-    }
+if (!/^BBCCQ20\d{4}$/.test(certificateId)) {
+  toast({
+    title: 'Invalid Certificate ID',
+    description: 'Please enter a valid certificate ID in the format BBCCQ00######.',
+    variant: 'destructive',
+  });
+  return;
+}
+
 
     setLoading(true);
     try {
-      // Direct lookup by certificate_id column
+      // Extract the user ID from the certificate ID
+      const userId = certificateId.substring(7);
+      
+      // Query the database for the user with the ID
       const { data, error } = await supabase
         .from('quiz_results')
         .select('*')
-        .eq('certificate_id', certificateId)
-        .single();
+        .filter('id', 'ilike', `${userId}%`)
+        .maybeSingle();
 
-      if (error || !data) {
-        toast({
-          title: 'Certificate Not Found',
-          description: 'No certificate found with this ID.',
-          variant: 'destructive',
-        });
-        setResult({ isValid: false });
+      if (error) {
+        console.error('Error verifying certificate:', error);
+        
+        // Special handling for permission errors
+        if (error.code === '18' || error.code === '42501' || error.message.includes('permission') || error.message.includes('denied')) {
+          toast({
+            title: 'Access Restricted',
+            description: 'Unable to verify certificate due to permission restrictions. Please try logging in first.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to verify certificate. Please try again.',
+            variant: 'destructive',
+          });
+        }
+        setResult(null);
         return;
       }
 
-      const score = data.score || 0;
-      const percentage = Math.round((score / quizQuestions.length) * 100);
+      if (!data) {
+        toast({
+          title: 'Invalid Certificate',
+          description: 'This certificate could not be verified. It may be invalid or no longer exist.',
+          variant: 'destructive',
+        });
+        setResult({
+          isValid: false
+        });
+        return;
+      }
 
+      // Calculate percentage
+      const score = data.score || 0;
+      const totalQuestions = quizQuestions.length;
+      const percentage = Math.round((score / totalQuestions) * 100);
+
+      // Only valid if the score is >= 50%
       if (percentage < 50) {
         toast({
           title: 'Invalid Certificate',
           description: 'This certificate is not valid as the user did not achieve the minimum passing score.',
           variant: 'destructive',
         });
-        setResult({ isValid: false });
+        setResult({
+          isValid: false
+        });
         return;
       }
 
+      // Valid certificate
       setResult({
         isValid: true,
         name: data.name,
         email: data.email,
         score: score,
         percentage: percentage,
-        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown',
-        registerNumber: data.register_number,
-        studentClass: data.class,
-        certificateId: data.certificate_id,
+        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown'
       });
 
       toast({
@@ -128,7 +155,7 @@ const VerifyCertificate = () => {
               </label>
               <Input
                 id="certificate-id"
-                placeholder="e.g. BBCCQ2001"
+                placeholder="e.g. BBCCQ00123456"
                 value={certificateId}
                 onChange={handleCertificateIdChange}
                 className="w-full"
@@ -148,9 +175,6 @@ const VerifyCertificate = () => {
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-2">
                       <div>
-                        <span className="font-medium">Certificate ID:</span> {result.certificateId}
-                      </div>
-                      <div>
                         <span className="font-medium">Name:</span> {result.name}
                       </div>
                       <div>
@@ -162,16 +186,6 @@ const VerifyCertificate = () => {
                       <div>
                         <span className="font-medium">Issue Date:</span> {result.date}
                       </div>
-                      {result.registerNumber && (
-                        <div>
-                          <span className="font-medium">Register Number:</span> {result.registerNumber}
-                        </div>
-                      )}
-                      {result.studentClass && (
-                        <div>
-                          <span className="font-medium">Class:</span> {result.studentClass}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ) : (
