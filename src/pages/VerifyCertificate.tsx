@@ -85,7 +85,7 @@ const VerifyCertificate = () => {
         date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown',
         registerNumber: data.register_number,
         studentClass: data.class,
-        certificateId: data.certificate_id
+        certificateId: data.certificate_id,
       });
 
       toast({
