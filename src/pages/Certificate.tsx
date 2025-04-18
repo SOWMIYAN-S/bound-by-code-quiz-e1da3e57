@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,11 +61,23 @@ const Certificate = () => {
           return;
         }
         
-        // Find user's registration order
-        const userIndex = allUsers.findIndex(u => u.id === user.id) + 1;
+        // Find user's registration order - we get all users sorted by creation time and find our user
+        const { data: sortedUsers, error: sortError } = await supabase
+          .from('quiz_results')
+          .select('id')
+          .order('created_at', { ascending: true });
+          
+        if (sortError) {
+          console.error('Error fetching user order:', sortError);
+          setLoading(false);
+          return;
+        }
+          
+        const userIndex = sortedUsers.findIndex(u => u.id === user.id) + 1;
+        console.log(`User index in database: ${userIndex} for user ID: ${user.id}`);
         
         // Generate certificate using data from context
-        generateCertificateForUser(user.name, score, totalQuestions, userIndex || 1);
+        generateCertificateForUser(user.name, score, totalQuestions, userIndex || 1, user.id);
         return;
       }
 
@@ -102,7 +113,7 @@ const Certificate = () => {
       if (!data) {
         toast({
           title: 'User Not Found',
-          description: 'No records found for this email address. Please register and complete the quiz first :(',
+          description: 'No records found for this email address. Please register and complete the quiz first.',
           variant: 'destructive',
         });
         setLoading(false);
@@ -125,11 +136,23 @@ const Certificate = () => {
         return;
       }
 
-      // Find user's registration order
-      const userIndex = allUsers.findIndex(u => u.id === data.id) + 1;
+      // Get the user's position in registration order
+      const { data: sortedUsers, error: sortError } = await supabase
+        .from('quiz_results')
+        .select('id')
+        .order('created_at', { ascending: true });
+        
+      if (sortError) {
+        console.error('Error fetching user order:', sortError);
+        setLoading(false);
+        return;
+      }
+        
+      const userIndex = sortedUsers.findIndex(u => u.id === data.id) + 1;
+      console.log(`User index in database: ${userIndex} for user ID: ${data.id}`);
       
       // Generate certificate
-      generateCertificateForUser(data.name, score, totalQuestions, userIndex || 1);
+      generateCertificateForUser(data.name, score, totalQuestions, userIndex || 1, data.id);
       
     } catch (error) {
       console.error('Error generating certificate:', error);
@@ -143,18 +166,40 @@ const Certificate = () => {
   };
 
   // Helper function to generate and handle certificate creation
-  const generateCertificateForUser = (name: string, score: number, totalQuestions: number, registrationOrder: number) => {
+  const generateCertificateForUser = async (name: string, score: number, totalQuestions: number, registrationOrder: number, userId: string) => {
     toast({
       title: 'Generating Certificate',
       description: 'Your certificate is being prepared, please wait...',
     });
     
+    // Format certificate ID
+    const certNumberStr = registrationOrder.toString().padStart(2, '0');
+    const certificateId = `BBCCQ20${certNumberStr}`;
+    
+    // Update the certificate_id in the database
+    console.log(`Setting certificate_id: ${certificateId} for user ID: ${userId}`);
+    const { error: updateError } = await supabase
+      .from('quiz_results')
+      .update({ certificate_id: certificateId })
+      .eq('id', userId);
+      
+    if (updateError) {
+      console.error('Error updating certificate ID:', updateError);
+      toast({
+        title: 'Database Error',
+        description: 'Failed to update certificate ID. Please try again.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+    
     // Add slight delay to ensure UI updates properly before generating certificate
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const success = generateCertificate(name, score, totalQuestions, registrationOrder);
+        const success = await generateCertificate(name, score, totalQuestions, registrationOrder);
         
-        if (success !== false) {
+        if (success) {
           toast({
             title: 'Certificate Generated',
             description: 'Your certificate has been successfully generated and is downloading now.',

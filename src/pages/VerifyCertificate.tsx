@@ -32,60 +32,51 @@ const VerifyCertificate = () => {
   };
 
   const verifyCertificate = async () => {
-if (!/^BBCCQ20\d{4}$/.test(certificateId)) {
-  toast({
-    title: 'Invalid Certificate ID',
-    description: 'Please enter a valid certificate ID in the format BBCCQ00######.',
-    variant: 'destructive',
-  });
-  return;
-}
-
+    if (!/^BBCCQ20\d{2}$/.test(certificateId)) {
+      toast({
+        title: 'Invalid Certificate ID',
+        description: 'Please enter a valid certificate ID in the format BBCCQ20##.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setLoading(true);
     try {
-      // Extract the user ID from the certificate ID
-      const userId = certificateId.substring(7);
+      // Query directly using certificate_id column
+      console.log(`Verifying certificate ID: ${certificateId}`);
       
-      // Query the database for the user with the ID
+      // Search for the certificate ID directly in the database
       const { data, error } = await supabase
         .from('quiz_results')
         .select('*')
-        .filter('id', 'ilike', `${userId}%`)
+        .eq('certificate_id', certificateId)
         .maybeSingle();
 
       if (error) {
-        console.error('Error verifying certificate:', error);
-        
-        // Special handling for permission errors
-        if (error.code === '18' || error.code === '42501' || error.message.includes('permission') || error.message.includes('denied')) {
-          toast({
-            title: 'Access Restricted',
-            description: 'Unable to verify certificate due to permission restrictions. Please try logging in first.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Error',
-            description: 'Failed to verify certificate. Please try again.',
-            variant: 'destructive',
-          });
-        }
+        console.error('Error fetching certificate data:', error);
+        toast({
+          title: 'Database Error',
+          description: 'Failed to fetch certificate data.',
+          variant: 'destructive',
+        });
         setResult(null);
         return;
       }
 
+      // If no result found with this certificate ID
       if (!data) {
+        console.error('Certificate not found in database:', certificateId);
         toast({
           title: 'Invalid Certificate',
-          description: 'This certificate could not be verified. It may be invalid or no longer exist.',
+          description: 'No matching certificate found in our records.',
           variant: 'destructive',
         });
-        setResult({
-          isValid: false
-        });
+        setResult({ isValid: false });
         return;
       }
+
+      console.log('Found certificate data:', data);
 
       // Calculate percentage
       const score = data.score || 0;
@@ -99,9 +90,7 @@ if (!/^BBCCQ20\d{4}$/.test(certificateId)) {
           description: 'This certificate is not valid as the user did not achieve the minimum passing score.',
           variant: 'destructive',
         });
-        setResult({
-          isValid: false
-        });
+        setResult({ isValid: false });
         return;
       }
 
@@ -155,7 +144,7 @@ if (!/^BBCCQ20\d{4}$/.test(certificateId)) {
               </label>
               <Input
                 id="certificate-id"
-                placeholder="e.g. BBCCQ00123456"
+                placeholder="e.g. BBCCQ2001"
                 value={certificateId}
                 onChange={handleCertificateIdChange}
                 className="w-full"

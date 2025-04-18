@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       quiz_results: {
         Row: {
+          certificate_id: string | null
           completed: boolean | null
           created_at: string | null
           email: string
@@ -22,6 +23,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          certificate_id?: string | null
           completed?: boolean | null
           created_at?: string | null
           email: string
@@ -33,6 +35,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          certificate_id?: string | null
           completed?: boolean | null
           created_at?: string | null
           email?: string
