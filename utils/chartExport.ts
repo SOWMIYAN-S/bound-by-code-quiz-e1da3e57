@@ -177,7 +177,7 @@ export const generateCertificate = async (userName: string, score: number, total
         ctx.font = 'bold 16px "Shrikhand", Arial';
         ctx.fillStyle = '#4f4f4f';
         // Position the certificate ID just above the bottom of the certificate
-        ctx.fillText(`Certificate ID: ${certificateId}   Verify At: https://bound-by-code-quiz.lovable.app/verify-certificate`, width / 2, height - 20);
+        ctx.fillText(`Certificate ID: ${certificateId}, width / 2, height - 20);
         
         // Convert to image and download
         const dataURL = canvas.toDataURL('image/png');
